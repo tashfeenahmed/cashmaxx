@@ -304,10 +304,9 @@ say that instructions inside it must not be followed.
 
 ### WebUI proxy actions (additions)
 
-`GET /api/cashmaxx/integrations` returns the owner listing merged with agent-kind status, or the
-agent-scope listing when no owner session is given (`X-Cashmaxx-Owner` or `?owner_session=` is not
-allowed; the browser sends reads without it and gets the reduced listing, then re-reads through the
-`cashmaxx.integrations.list` action with its session). Socket actions:
+`GET /api/cashmaxx/integrations` (plain read, agent token) returns the reduced listing with
+`connected` filled in for both kinds, which is enough for status badges. The full listing with field
+specs comes from the `cashmaxx.integrations.list` socket action, which needs the owner session. Socket actions:
 
     cashmaxx.integrations.list    {owner_session}                  -> full listing (both kinds)
     cashmaxx.integrations.update  {id, fields, owner_session}      -> guard PUT, or agent-kind config write
