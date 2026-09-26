@@ -80,6 +80,13 @@ documents = [
     "openpyxl>=3.1.0,<4.0.0",
     "python-pptx>=1.0.0,<2.0.0",
 ]
+# cashmaxx: wallet guard, x402 and Stripe support.
+cashmaxx = [
+    "aiohttp>=3.9.0,<4.0.0",
+    "cdp-sdk>=1.46.0,<2.0.0",
+    "x402>=2.20.0,<3.0.0",
+    "stripe>=12.0.0,<16.0.0",
+]
 langfuse = [
     "langfuse>=3.0.0,<4.0.0",
 ]
@@ -110,11 +117,24 @@ dev = [
 [project.scripts]
 nanobot = "nanobot.cli.entry:main"
 nanobot-desktop-tui = "nanobot.cli.desktop_tui:main"
+cashmaxx = "cashmaxx.cli:main"
 
 # Third-party tool plugins register here.  Built-in tools are discovered
 # automatically via pkgutil scanning in ToolLoader.discover().
 # [project.entry-points."nanobot.tools"]
 # my_plugin = "my_package.plugins:MyTool"
+
+# cashmaxx: wallet and ledger tools, served by the guard process.
+[project.entry-points."nanobot.tools"]
+cashmaxx_wallet = "cashmaxx.plugin.tools:WalletTool"
+cashmaxx_pay = "cashmaxx.plugin.tools:PayTool"
+cashmaxx_payment_status = "cashmaxx.plugin.tools:PaymentStatusTool"
+cashmaxx_x402_fetch = "cashmaxx.plugin.tools:X402FetchTool"
+cashmaxx_ledger = "cashmaxx.plugin.tools:LedgerTool"
+cashmaxx_record_cost = "cashmaxx.plugin.tools:RecordCostTool"
+cashmaxx_sell_product = "cashmaxx.plugin.tools:SellProductTool"
+cashmaxx_settings = "cashmaxx.plugin.tools:SettingsTool"
+cashmaxx_freeze = "cashmaxx.plugin.tools:FreezeTool"
 
 [build-system]
 requires = ["hatchling"]
@@ -134,6 +154,9 @@ include = [
     "nanobot/skills/**/*.sh",
     "nanobot/channels/*/webui/**/*",
     "nanobot/web/dist/**/*",
+    "cashmaxx/**/*.py",
+    "cashmaxx/templates/**/*.md",
+    "cashmaxx/skills/**/*.md",
 ]
 # nanobot/web/dist/ is produced by `cd webui && bun run build` and is
 # git-ignored. List it as an artifact so hatch ships it in both wheel and
@@ -143,16 +166,18 @@ artifacts = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["nanobot"]
+packages = ["nanobot", "cashmaxx"]
 exclude = ["nanobot/channels/*/tests/**"]
 
 [tool.hatch.build.targets.wheel.sources]
 "nanobot" = "nanobot"
+"cashmaxx" = "cashmaxx"
 
 [tool.hatch.build.targets.sdist]
 include = [
     "nanobot/",
     "nanobot/web/dist/",
+    "cashmaxx/",
     "hatch_build.py",
     "README.md",
     "LICENSE",
@@ -170,7 +195,7 @@ select = ["E", "F", "I", "N", "W"]
 ignore = ["E501"]
 
 [tool.basedpyright]
-include = ["nanobot"]
+include = ["nanobot", "cashmaxx"]
 exclude = ["**/tests"]
 typeCheckingMode = "strict"
 pythonVersion = "3.11"
@@ -180,7 +205,7 @@ asyncio_mode = "auto"
 testpaths = ["tests", "nanobot/channels"]
 
 [tool.coverage.run]
-source = ["nanobot"]
+source = ["nanobot", "cashmaxx"]
 omit = ["tests/*", "**/tests/*"]
 
 [tool.coverage.report]
