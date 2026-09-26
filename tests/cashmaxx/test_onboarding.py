@@ -403,3 +403,24 @@ def test_default_guard_port_does_not_clash_with_nanobot() -> None:
     from nanobot.config.schema import ApiConfig, GatewayConfig
 
     assert DEFAULT_GUARD_PORT not in {GatewayConfig().port, ApiConfig().port}
+
+
+def test_apply_nanobot_config_turns_on_the_exec_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ob, "exec_sandbox_backend", lambda: "seatbelt")
+    config = Config()
+    ob.apply_nanobot_config(config, _answers())
+    assert config.tools.exec.sandbox == "seatbelt"
+
+    chosen = Config()
+    chosen.tools.exec.sandbox = "bwrap"
+    ob.apply_nanobot_config(chosen, _answers())
+    assert chosen.tools.exec.sandbox == "bwrap"  # the owner's choice wins
+
+
+def test_no_sandbox_is_warned_about(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ob, "exec_sandbox_backend", lambda: "")
+    config = Config()
+    config.agents.defaults.workspace = str(tmp_path / "ws")
+    outcome = ob.write_everything(_answers(), config, nanobot_config_path=tmp_path / "config.json",
+                                  guard_path=tmp_path / "cmx" / "guard.json")
+    assert ob.NO_SANDBOX_WARNING in outcome.warnings

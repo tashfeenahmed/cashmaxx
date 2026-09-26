@@ -17,6 +17,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import secrets
+import shutil
+import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from decimal import ROUND_DOWN, Decimal, InvalidOperation
@@ -263,6 +265,7 @@ def apply_nanobot_config(config: Config, answers: OnboardAnswers) -> Config:
         defaults.model_preset = None
     config.cashmaxx = CashmaxxAgentConfig(guard_url=answers.guard_url, agent_token=answers.agent_token)
     config.tools.restrict_to_workspace = True
+    apply_exec_sandbox(config)
     if telegram_configured(config):
         telegram = getattr(config.channels, "telegram")
         if isinstance(telegram, dict):
@@ -270,6 +273,36 @@ def apply_nanobot_config(config: Config, answers: OnboardAnswers) -> Config:
         else:
             telegram.inline_keyboards = True
     return config
+
+
+HOMEBREW_PREFIX = Path("/opt/homebrew")
+
+
+def exec_sandbox_backend() -> str:
+    """The OS sandbox for the agent's shell, or "" when this machine has none.
+
+    restrictToWorkspace alone only pattern-matches commands (``cd .. && cat ...`` gets past
+    it), so guard.json with the CDP secrets needs a real OS boundary.
+    """
+    if sys.platform == "darwin" and Path("/usr/bin/sandbox-exec").exists():
+        return "seatbelt"
+    if sys.platform.startswith("linux") and shutil.which("bwrap"):
+        return "bwrap"
+    return ""
+
+
+def apply_exec_sandbox(config: Config) -> None:
+    """Turn on the exec sandbox unless the owner already picked one."""
+    exec_cfg = config.tools.exec
+    if exec_cfg.sandbox:
+        return
+    exec_cfg.sandbox = exec_sandbox_backend()
+    # Seatbelt denies everything outside the workspace; keep Homebrew tools usable (read-only).
+    if exec_cfg.sandbox == "seatbelt" and HOMEBREW_PREFIX.is_dir():
+        if str(HOMEBREW_PREFIX) not in exec_cfg.sandbox_ro_binds:
+            exec_cfg.sandbox_ro_binds.append(str(HOMEBREW_PREFIX))
+        if not exec_cfg.path_append:
+            exec_cfg.path_append = str(HOMEBREW_PREFIX / "bin")
 
 
 def parse_model_ids(payload: object) -> list[str]:
@@ -498,7 +531,8 @@ def collect_answers(p: Prompter, config: Config, services: Services | None = Non
         network = "base-sepolia"
 
     # 4. OpenRouter
-    p.say("\n[bold]OpenRouter[/bold] runs the agent's model and lets the guard track compute spend.")
+    p.say("\n[bold]OpenRouter[/bold] runs the agent's model and lets the guard track compute spend. "
+          "Use a key only Cashmaxx uses: the guard counts all spend on it as the agent's cost.")
     api_key = p.secret("OpenRouter API key (sk-or-...)").strip()
     models: list[str] = []
     try:
@@ -627,6 +661,12 @@ SAME_MACHINE_WARNING = (
 )
 
 
+NO_SANDBOX_WARNING = (
+    "No OS sandbox (seatbelt/bwrap) for the agent's shell on this machine, so it can read "
+    "guard.json. Install bubblewrap or run the guard in a container before using real money."
+)
+
+
 @dataclass
 class OnboardOutcome:
     guard_config_path: Path
@@ -671,12 +711,15 @@ def write_everything(
         pass
 
     report = install_workspace(config.workspace_path, guard_cfg.settings, force=force_workspace)
+    warnings = list(warnings or [])
+    if not config.tools.exec.sandbox:
+        warnings.append(NO_SANDBOX_WARNING)
     return OnboardOutcome(
         guard_config_path=guard_path,
         nanobot_config_path=nanobot_config_path,
         workspace=config.workspace_path,
         wallet_address=wallet_address,
-        warnings=list(warnings or []),
+        warnings=warnings,
         workspace_changes=report.changed,
         skipped_files=report.skipped,
     )
