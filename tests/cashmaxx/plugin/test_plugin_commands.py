@@ -88,3 +88,26 @@ async def test_there_is_no_approve_command(fake_guard: FakeGuard, workspace: Pat
     text = await _send(_router(), "/approve ap1", workspace)
     assert text.startswith("Unknown command")
     assert not any(r.url.path.endswith("/approve") for r in fake_guard.requests)
+
+
+async def test_status_lists_connected_integrations(fake_guard: FakeGuard, workspace: Path) -> None:
+    fake_guard.set("GET", "/integrations", {"integrations": [
+        {"id": "gmail", "label": "Gmail", "kind": "guard", "category": "email",
+         "connected": True},
+        {"id": "x", "label": "X (Twitter)", "kind": "guard", "category": "social",
+         "connected": False},
+        {"id": "bluesky", "label": "Bluesky", "kind": "guard", "category": "social",
+         "connected": True},
+    ]})
+    fake_guard.set("GET", "/email/status", {"provider": "gmail", "address": "bot@gmail.com",
+                                            "connected": True, "sent_today": 2, "cap_today": 10})
+    text = await _send(_router(), "/cashmaxx", workspace)
+    assert "Integrations:" in text
+    assert "  - Gmail (email): connected, bot@gmail.com, 2/10 sent today" in text
+    assert "  - Bluesky (social): connected" in text
+    assert "X (Twitter)" not in text and "Browser" not in text
+
+
+async def test_status_integrations_unavailable(fake_guard: FakeGuard, workspace: Path) -> None:
+    text = await _send(_router(), "/cashmaxx", workspace)  # fake guard has no /integrations
+    assert "Integrations: unavailable" in text and "0xabc" in text

@@ -424,3 +424,153 @@ def test_no_sandbox_is_warned_about(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     outcome = ob.write_everything(_answers(), config, nanobot_config_path=tmp_path / "config.json",
                                   guard_path=tmp_path / "cmx" / "guard.json")
     assert ob.NO_SANDBOX_WARNING in outcome.warnings
+
+
+# --- optional integrations --------------------------------------------------------------------
+
+
+def test_extra_integrations_are_the_non_legacy_catalog_entries() -> None:
+    assert [s.id for s in ob.EXTRA_INTEGRATIONS] == [
+        "gmail", "agentmail", "bluesky", "x", "reddit", "hosting", "browser", "github", "search"]
+
+
+def test_no_integrations_by_default() -> None:
+    prompter = ScriptedPrompter(_script())
+    a = ob.collect_answers(prompter, Config(), _services()).answers
+    assert a.integrations == {} and a.agent_integrations == {}
+    assert a.email_provider is None
+    assert any("More integrations" in m for m in prompter.asked)
+    assert ob.build_settings(a).email_provider == "none"
+
+
+def _integration_script(**over: Any) -> dict[str, Any]:
+    return _script(**{
+        "More integrations": ["gmail", "agentmail", "hosting", "github", "bluesky"],
+        "Gmail Gmail address": "agent@gmail.com",
+        "Gmail App password": "gmail-app-pw",
+        "AgentMail API key": "am-key",
+        "Public hosting Provider": "cloudflare_token",
+        "Public hosting Tunnel token": "tunnel-tok",
+        "GitHub Fine-grained token": "github_pat_1",
+        "Bluesky Handle": "me.bsky.social",
+        "Bluesky App password": "bsky-pw",
+        "Email provider": "gmail",
+        "Turn on public hosting": True,
+        **over,
+    })
+
+
+def test_collect_extra_integrations() -> None:
+    prompter = ScriptedPrompter(_integration_script())
+    a = ob.collect_answers(prompter, Config(), _services()).answers
+    assert a.integrations["gmail"] == {"address": "agent@gmail.com", "appPassword": "gmail-app-pw"}
+    assert a.integrations["agentmail"] == {"apiKey": "am-key", "inboxId": ""}
+    assert a.integrations["hosting"] == {"provider": "cloudflare_token", "tunnelToken": "tunnel-tok"}
+    assert a.agent_integrations == {"github": {"token": "github_pat_1"}}
+    assert a.email_provider == "gmail" and a.hosting_enabled is True
+    said = "\n".join(prompter.said)
+    assert "week 1" in said and "socialDailyCap" in said
+    settings = ob.build_settings(a)
+    assert settings.email_provider == "gmail" and settings.hosting_enabled is True
+
+
+def test_provider_specific_fields_are_skipped() -> None:
+    prompter = ScriptedPrompter(_script(**{
+        "More integrations": ["hosting", "browser", "search"],
+        "Public hosting Provider": "cloudflare_quick",
+        "Browser Provider": "playwright",
+        "Web search Provider": "exa",
+    }))
+    a = ob.collect_answers(prompter, Config(), _services()).answers
+    assert a.integrations["hosting"] == {"provider": "cloudflare_quick"}
+    assert a.agent_integrations["browser"] == {"provider": "playwright"}
+    assert a.agent_integrations["search"] == {"provider": "exa", "apiKey": ""}
+    assert not any("Tunnel token" in m or "Browserbase" in m for m in prompter.asked)
+    assert a.email_provider is None and a.hosting_enabled is False
+
+
+def test_required_secret_is_asked_again() -> None:
+    prompter = ScriptedPrompter(_script(**{
+        "More integrations": ["github"],
+        "GitHub Fine-grained token": [_Seq(""), _Seq("github_pat_2")],
+    }))
+    a = ob.collect_answers(prompter, Config(), _services()).answers
+    assert a.agent_integrations["github"] == {"token": "github_pat_2"}
+    assert any("required" in s for s in prompter.said)
+
+
+def test_collect_integration_fields_keeps_existing_values() -> None:
+    from cashmaxx.integrations_catalog import get_spec
+
+    prompter = ScriptedPrompter({})
+    values = ob.collect_integration_fields(
+        prompter, get_spec("search"),
+        {"provider": {"set": True, "value": "firecrawl"}, "apiKey": {"set": True}},
+    )
+    assert values == {"provider": "firecrawl", "apiKey": ""}
+    assert any("leave empty to keep" in m for m in prompter.asked)
+
+
+def test_build_guard_integrations_connected_at() -> None:
+    a = _answers(integrations={"gmail": {"address": "a@gmail.com", "appPassword": "pw "}})
+    fresh = ob.build_guard_integrations(a, now="2026-09-26T00:00:00+00:00")
+    assert fresh["gmail"].fields == {"address": "a@gmail.com", "appPassword": "pw"}
+    assert fresh["gmail"].connected_at == "2026-09-26T00:00:00+00:00"
+
+    existing = GuardConfig.model_validate({"integrations": {
+        "gmail": {"fields": {"address": "a@gmail.com", "appPassword": "old"},
+                  "connectedAt": "2026-09-01T00:00:00+00:00"},
+        "bluesky": {"fields": {"handle": "x"}, "connectedAt": "2026-09-02T00:00:00+00:00"},
+    }})
+    kept = ob.build_guard_integrations(a, existing, now="2026-09-26T00:00:00+00:00")
+    assert kept["gmail"].connected_at == "2026-09-01T00:00:00+00:00"  # same address: warm-up goes on
+    assert kept["gmail"].fields["appPassword"] == "pw"
+    assert "bluesky" in kept  # not re-entered: kept
+    moved = ob.build_guard_integrations(
+        _answers(integrations={"gmail": {"address": "b@gmail.com", "appPassword": "pw"}}),
+        existing, now="2026-09-26T00:00:00+00:00")
+    assert moved["gmail"].connected_at == "2026-09-26T00:00:00+00:00"
+
+
+def test_rerun_keeps_integration_settings() -> None:
+    existing = GuardConfig.model_validate({
+        "settings": {"emailProvider": "agentmail", "socialDailyCap": 7, "hostingEnabled": True},
+        "integrations": {"agentmail": {"fields": {"apiKey": "k"}},
+                         "hosting": {"fields": {"provider": "cloudflare_quick"}}},
+    })
+    guard = ob.build_guard_config(_answers(), existing)
+    assert guard.settings.email_provider == "agentmail"
+    assert guard.settings.social_daily_cap == 7 and guard.settings.hosting_enabled is True
+    chosen = ob.build_guard_config(_answers(email_provider="none", hosting_enabled=False), existing)
+    assert chosen.settings.email_provider == "none" and chosen.settings.hosting_enabled is False
+
+
+def test_run_onboarding_writes_integrations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import nanobot.config.loader as loader
+
+    monkeypatch.setattr(loader, "_current_config_path", loader._current_config_path)
+    monkeypatch.setenv("CASHMAXX_HOME", str(tmp_path / "cmx"))
+    cfg_path = tmp_path / "nb" / "config.json"
+    ws = tmp_path / "ws"
+
+    def fake_nanobot_onboard(path: Path) -> None:
+        from nanobot.config.loader import save_config
+
+        save_config(Config.model_validate({"agents": {"defaults": {"workspace": str(ws)}}}), path)
+
+    prompter = ScriptedPrompter(_integration_script())
+    outcome = ob.run_onboarding(
+        nanobot_config_path=cfg_path, prompter=prompter, services=_services(),
+        run_nanobot_onboard=fake_nanobot_onboard,
+    )
+    guard = load_guard_config(outcome.guard_config_path)
+    assert guard.integrations["gmail"].fields["appPassword"] == "gmail-app-pw"
+    assert guard.integrations["gmail"].connected_at
+    assert guard.integrations["bluesky"].fields["handle"] == "me.bsky.social"
+    assert guard.settings.email_provider == "gmail" and guard.settings.hosting_enabled
+    saved = json.loads(cfg_path.read_text())
+    github = saved["tools"]["mcpServers"]["github"]
+    assert github["env"]["GITHUB_PERSONAL_ACCESS_TOKEN"] == "github_pat_1"
+    text = cfg_path.read_text()
+    assert "gmail-app-pw" not in text and "tunnel-tok" not in text and "bsky-pw" not in text
+    assert any("Integrations:" in s and "github" in s for s in prompter.said)

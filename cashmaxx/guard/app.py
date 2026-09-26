@@ -14,7 +14,7 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 from urllib.parse import urlparse
 
 from aiohttp import web
@@ -34,6 +34,9 @@ from cashmaxx.config import (
 from cashmaxx.guard import ledger, public
 from cashmaxx.guard.auth import OwnerSessions, RateLimiter, check_agent_token, verify_pin
 from cashmaxx.guard.compute import ComputeManager, OpenRouterClient
+from cashmaxx.guard.errors import ApiError
+from cashmaxx.guard.integrations import registry
+from cashmaxx.guard.integrations.service import IntegrationDeps, IntegrationsService
 from cashmaxx.guard.policy import PolicyState, SpendRequest, evaluate
 from cashmaxx.guard.store import (
     Actor,
@@ -50,6 +53,7 @@ from cashmaxx.guard.wallet import WalletBackend
 from cashmaxx.guard.watchers import Watchers
 from cashmaxx.money import ZERO, fmt_usd, parse_usd
 
+T = TypeVar("T")
 Clock = Callable[[], datetime]
 Scope = Literal["agent", "owner"]
 Handler = Callable[[web.Request], Awaitable[web.StreamResponse]]
@@ -67,15 +71,6 @@ def _utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-class ApiError(Exception):
-    def __init__(self, status: int, code: str, message: str, **extra: Any) -> None:
-        super().__init__(f"{code}: {message}")
-        self.status = status
-        self.code = code
-        self.message = message
-        self.extra = extra
-
-
 # --- the guard service ---------------------------------------------------------------------
 class Guard:
     """Business logic shared by the HTTP API, the Telegram bot and the watchers."""
@@ -91,6 +86,7 @@ class Guard:
         clock: Clock,
         stripe: StripeClient | None,
         openrouter: OpenRouterClient | None,
+        integration_deps: IntegrationDeps | None = None,
     ) -> None:
         self.config = config
         self.config_path = config_path
@@ -106,6 +102,9 @@ class Guard:
         self.compute = ComputeManager(self, openrouter)
         self._spend_lock = asyncio.Lock()
         self._config_lock = asyncio.Lock()
+        self.bot: TelegramBot | None = None  # set when the guard runs its own bot (not in tests)
+        self.running = False
+        self.integrations = IntegrationsService(self, integration_deps)
 
     # --- plumbing ---------------------------------------------------------------------------
     @property
@@ -132,6 +131,54 @@ class Guard:
             if self.config_path is not None:
                 await asyncio.to_thread(save_guard_config, self.config, self.config_path)
 
+    async def mutate_config(self, fn: Callable[[GuardConfig], T]) -> T:
+        """Change the config under the lock and persist it (``guard.json``, 0600)."""
+        async with self._config_lock:
+            result = fn(self.config)
+            if self.config_path is not None:
+                await asyncio.to_thread(save_guard_config, self.config, self.config_path)
+            return result
+
+    async def reload_integration(self, integration_id: str) -> bool:
+        """Rebuild the client an integration change affects. Returns ``restart_required``.
+
+        Email and social clients are built per call from the config, so they need nothing here.
+        The CDP wallet is bound at startup: a change there needs a guard restart.
+        """
+        c = self.config
+        if integration_id == "telegram" and self.bot is not None:
+            old = self.bot
+            new = TelegramBot(c.telegram.bot_token, c.telegram.owner_chat_id, actions=self)
+            self.bot = new
+            self.notifier = new
+            await old.stop()
+            if self.running:
+                new.start()
+        elif integration_id == "stripe":
+            try:
+                deps = self.integrations.deps
+                self.stripe = deps.stripe_factory(c.stripe_restricted_key) \
+                    if c.stripe_restricted_key else None
+            except Exception as exc:
+                logger.warning("guard: Stripe client reload failed: {}", type(exc).__name__)
+                self.stripe = None
+        elif integration_id == "openrouter":
+            old_or = self.openrouter
+            self.openrouter = OpenRouterClient(c.openrouter_api_key) \
+                if c.openrouter_api_key else None
+            self.compute.openrouter = self.openrouter
+            if old_or is not None:
+                try:
+                    await old_or.aclose()
+                except Exception as exc:
+                    logger.warning("guard: OpenRouter close failed: {}", exc)
+        elif integration_id == "hosting":
+            if not registry.is_connected(c, registry.get_guard_spec("hosting")):
+                await self.integrations.stop_all_tunnels("hosting disconnected")
+        elif integration_id == "cdp":
+            return self.network != "fake"
+        return False
+
     # --- settings / freeze ------------------------------------------------------------------
     async def update_settings(self, patch: dict[str, Any]) -> tuple[CashmaxxSettings, bool]:
         """Validate and persist a partial update. Returns ``(settings, restart_required)``."""
@@ -150,8 +197,15 @@ class Guard:
             new = CashmaxxSettings.model_validate(merged)
         except ValidationError as exc:
             raise ApiError(422, "invalid", _validation_message(exc)) from exc
+        if "emailProvider" in normalized and new.email_provider != "none":
+            spec = registry.get_guard_spec(new.email_provider)
+            if not registry.is_connected(self.config, spec):
+                raise ApiError(400, "email_not_connected",
+                               f"connect {spec.label} before choosing it as the email provider")
         restart = new.network != self.network
         await self._set_settings(new)
+        if not new.hosting_enabled:
+            await self.integrations.stop_all_tunnels("hosting disabled")
         await self.event("owner", "settings_updated", {"fields": sorted(normalized),
                                                        "restart_required": restart})
         return new, restart
@@ -758,6 +812,9 @@ def _settings_json(guard: Guard, scope: Scope) -> dict[str, Any]:
             "cdp": bool(c.cdp.api_key_id and c.cdp.api_key_secret and c.cdp.wallet_secret),
             "public_base_url": c.public_base_url,
         }
+        for spec_item in registry.listing(c, "agent"):
+            if spec_item["kind"] == "guard":
+                out["integrations"].setdefault(spec_item["id"], spec_item["connected"])
     return out
 
 
@@ -826,6 +883,98 @@ async def events(request: web.Request) -> web.Response:
     return web.json_response({"events": [e.to_json() for e in items]})
 
 
+# --- integrations -----------------------------------------------------------------------------
+@requires("agent", "owner")
+async def list_integrations(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(guard.integrations.listing(_scope(request)))
+
+
+@requires("owner")
+async def update_integration(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    data = await _body(request)
+    item = await guard.integrations.update(request.match_info["integration_id"],
+                                           data.get("fields"))
+    return web.json_response(item)
+
+
+@requires("owner")
+async def test_integration(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(await guard.integrations.test(request.match_info["integration_id"]))
+
+
+@requires("owner")
+async def remove_integration(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(
+        await guard.integrations.remove(request.match_info["integration_id"]))
+
+
+@requires("owner")
+async def owner_check(request: web.Request) -> web.Response:
+    return web.json_response({"ok": True})
+
+
+@requires("agent", "owner")
+async def email_status(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(await guard.integrations.email_status())
+
+
+@requires("agent")
+async def email_send(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(await guard.integrations.email_send(await _body(request)))
+
+
+@requires("agent", "owner")
+async def email_inbox(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    unread = request.query.get("unread", "1").lower() not in ("0", "false", "no")
+    try:
+        limit = int(request.query.get("limit", "20"))
+    except ValueError as exc:
+        raise ApiError(422, "invalid", "limit must be an integer") from exc
+    if not 1 <= limit <= 50:
+        raise ApiError(422, "invalid", "limit must be between 1 and 50")
+    return web.json_response(await guard.integrations.email_inbox(unread_only=unread,
+                                                                  limit=limit))
+
+
+@requires("agent", "owner")
+async def email_message(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(
+        await guard.integrations.email_message(request.match_info["message_id"]))
+
+
+@requires("agent")
+async def social_post(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(await guard.integrations.social_post(await _body(request)))
+
+
+@requires("agent", "owner")
+async def hosting_list(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(guard.integrations.hosting_list())
+
+
+@requires("agent")
+async def hosting_expose(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(await guard.integrations.hosting_expose(await _body(request)))
+
+
+@requires("agent", "owner")
+async def hosting_stop(request: web.Request) -> web.Response:
+    guard = request.app[GUARD_KEY]
+    return web.json_response(
+        await guard.integrations.hosting_stop(request.match_info["name"], _scope(request)))
+
+
 async def public_pnl_json(request: web.Request) -> web.Response:
     guard = request.app[GUARD_KEY]
     if not guard.settings.public_pnl:
@@ -866,6 +1015,7 @@ def create_app(
     stripe: StripeClient | None = None,
     openrouter: OpenRouterClient | None = None,
     watch_interval_s: float | None = 60.0,
+    integration_deps: IntegrationDeps | None = None,
 ) -> web.Application:
     """Build the guard app.
 
@@ -877,7 +1027,8 @@ def create_app(
     store = Store(db_path or guard_db_path())
     wallet = wallet or build_wallet(config)
     if stripe is None and config.stripe_restricted_key:
-        stripe = StripeClient(config.stripe_restricted_key)
+        factory = integration_deps.stripe_factory if integration_deps else StripeClient
+        stripe = factory(config.stripe_restricted_key)
     if openrouter is None and config.openrouter_api_key:
         openrouter = OpenRouterClient(config.openrouter_api_key)
     bot: TelegramBot | None = None
@@ -886,10 +1037,11 @@ def create_app(
         notifier = bot
     guard = Guard(
         config, config_path=config_path, store=store, wallet=wallet, notifier=notifier,
-        clock=clock, stripe=stripe, openrouter=openrouter,
+        clock=clock, stripe=stripe, openrouter=openrouter, integration_deps=integration_deps,
     )
     if bot is not None:
         bot.actions = guard
+        guard.bot = bot
     watchers = Watchers(guard, interval_s=watch_interval_s or 60.0)
 
     app = web.Application(middlewares=[error_middleware], client_max_size=512 * 1024)
@@ -912,22 +1064,41 @@ def create_app(
     app.router.add_post("/unfreeze", unfreeze)
     app.router.add_post("/owner/session", owner_session)
     app.router.add_get("/events", events)
+    app.router.add_get("/owner/check", owner_check)
+    app.router.add_get("/integrations", list_integrations)
+    app.router.add_put("/integrations/{integration_id}", update_integration)
+    app.router.add_post("/integrations/{integration_id}/test", test_integration)
+    app.router.add_delete("/integrations/{integration_id}", remove_integration)
+    app.router.add_get("/email/status", email_status)
+    app.router.add_post("/email/send", email_send)
+    app.router.add_get("/email/inbox", email_inbox)
+    app.router.add_get("/email/messages/{message_id}", email_message)
+    app.router.add_post("/social/post", social_post)
+    app.router.add_get("/hosting", hosting_list)
+    app.router.add_post("/hosting/expose", hosting_expose)
+    app.router.add_delete("/hosting/{name}", hosting_stop)
     app.router.add_get("/public/pnl", public_pnl_html)
     app.router.add_get("/public/pnl.json", public_pnl_json)
 
     async def on_startup(_: web.Application) -> None:
         await guard.event("guard", "startup", {"network": guard.network,
                                                "version": __version__})
+        guard.running = True
         if watch_interval_s:
             watchers.start()
-        if bot is not None:
-            bot.start()
+        if guard.bot is not None:
+            guard.bot.start()
 
     async def on_cleanup(_: web.Application) -> None:
+        guard.running = False
         await watchers.stop()
-        if bot is not None:
-            await bot.stop()
-        for closer in (wallet.aclose, openrouter.aclose if openrouter else None):
+        try:
+            await guard.integrations.stop_all_tunnels("guard shutdown")
+        except Exception as exc:
+            logger.warning("guard: stopping tunnels failed: {}", exc)
+        if guard.bot is not None:
+            await guard.bot.stop()
+        for closer in (wallet.aclose, guard.openrouter.aclose if guard.openrouter else None):
             if closer is not None:
                 try:
                     await closer()

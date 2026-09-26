@@ -135,6 +135,12 @@ cashmaxx_record_cost = "cashmaxx.plugin.tools:RecordCostTool"
 cashmaxx_sell_product = "cashmaxx.plugin.tools:SellProductTool"
 cashmaxx_settings = "cashmaxx.plugin.tools:SettingsTool"
 cashmaxx_freeze = "cashmaxx.plugin.tools:FreezeTool"
+cashmaxx_email_status = "cashmaxx.plugin.tools:EmailStatusTool"
+cashmaxx_email_send = "cashmaxx.plugin.tools:EmailSendTool"
+cashmaxx_email_inbox = "cashmaxx.plugin.tools:EmailInboxTool"
+cashmaxx_email_read = "cashmaxx.plugin.tools:EmailReadTool"
+cashmaxx_social_post = "cashmaxx.plugin.tools:SocialPostTool"
+cashmaxx_expose = "cashmaxx.plugin.tools:ExposeTool"
 
 [build-system]
 requires = ["hatchling"]

@@ -89,9 +89,15 @@ Run it: `PAY_TO=0x... uvicorn app:app --port 8402`.
 
 ## Going live
 
-- Hosting: a local process is not reachable from the internet. Ask the owner to deploy it (a
-  small VM, Fly.io or Railway) or to expose it through a tunnel. Hosting costs go in with
-  `cashmaxx_record_cost`.
+- Hosting: a local process is not reachable from the internet. If the owner switched on public
+  hosting, expose it yourself with `cashmaxx_expose(action="expose", port=8402, name="<slug>")`:
+  the guard starts a Cloudflare tunnel and returns the public https URL. `action="list"` shows
+  running tunnels and `action="stop"` ends one. At most 3 tunnels; the guard, gateway and WebUI
+  ports can never be exposed. Expose only the API itself, never a service with secrets or an
+  admin page, and stop tunnels you no longer use. A quick tunnel's URL changes when it restarts,
+  so re-check it (`action="list"`) before announcing it anywhere.
+- If hosting is off or you need a stable address, ask the owner to deploy it (a small VM,
+  Fly.io or Railway) or to enable hosting. Hosting costs go in with `cashmaxx_record_cost`.
 - Mainnet: switch `X402_NETWORK` to `eip155:8453` only when the owner's network setting is `base`.
   The public x402.org facilitator is for testnet; mainnet needs a production facilitator (for
   example Coinbase CDP's), so ask the owner.

@@ -19,8 +19,9 @@ import hashlib
 import secrets
 import shutil
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from decimal import ROUND_DOWN, Decimal, InvalidOperation
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, cast
@@ -37,10 +38,18 @@ from cashmaxx.config import (
     CdpConfig,
     ComputePaymentMode,
     EarningMethod,
+    EmailProvider,
     GuardConfig,
     GuardTelegramConfig,
+    IntegrationConfig,
     Network,
     Rule,
+)
+from cashmaxx.integrations_catalog import (
+    INTEGRATIONS,
+    LEGACY_FIELDS,
+    FieldSpec,
+    IntegrationSpec,
 )
 
 if TYPE_CHECKING:
@@ -78,6 +87,20 @@ COMPUTE_MODE_HELP: dict[str, str] = {
     "owner_topup": "owner_topup: you top up OpenRouter when it runs low; counted as a cost",
     "x402_gateway": "x402_gateway: buy inference per request from an x402 gateway (experimental)",
 }
+GMAIL_WARMUP_TEXT = (
+    "Gmail warm-up: a new account sends little at first so it is not flagged as spam. The daily "
+    "cap is 10 in week 1, 20 in week 2, 40 in week 3 and 80 in week 4, then emailDailyCap applies."
+)
+SOCIAL_CAP_TEXT = (
+    "Posts on Bluesky, X and Reddit share one daily limit, socialDailyCap (3 by default). "
+    "Change it with `cashmaxx settings set socialDailyCap N`."
+)
+LEGACY_INTEGRATIONS = frozenset(iid for iid, _ in LEGACY_FIELDS)
+# Integrations offered in onboarding after the core steps (the legacy four are asked above).
+EXTRA_INTEGRATIONS: tuple[IntegrationSpec, ...] = tuple(
+    spec for spec in INTEGRATIONS if spec.id not in LEGACY_INTEGRATIONS
+)
+EMAIL_INTEGRATIONS = ("gmail", "agentmail")
 STRIPE_PERMISSIONS = (
     "Products: Write",
     "Prices: Write",
@@ -111,6 +134,11 @@ class OnboardAnswers:
     agent_token: str = ""
     guard_host: str = "127.0.0.1"
     guard_port: int = DEFAULT_GUARD_PORT
+    # Optional extra integrations: guard kind -> guard.json, agent kind -> nanobot MCP servers.
+    integrations: dict[str, dict[str, str]] = field(default_factory=lambda: {})
+    agent_integrations: dict[str, dict[str, str]] = field(default_factory=lambda: {})
+    email_provider: EmailProvider | None = None  # None: keep what guard.json has
+    hosting_enabled: bool | None = None
 
     @property
     def guard_url(self) -> str:
@@ -156,6 +184,8 @@ def build_settings(answers: OnboardAnswers) -> CashmaxxSettings:
         compute_payment_mode=answers.compute_payment_mode,
         owner_wallet=answers.owner_wallet or None,
         x402_gateway_url=answers.x402_gateway_url or None,
+        email_provider=answers.email_provider or "none",
+        hosting_enabled=bool(answers.hosting_enabled),
     )
 
 
@@ -229,8 +259,19 @@ def build_guard_config(answers: OnboardAnswers, existing: GuardConfig | None = N
     cdp = answers.cdp.model_copy()
     if existing is not None and cdp.account_name == CdpConfig().account_name:
         cdp.account_name = existing.cdp.account_name
+    integrations = build_guard_integrations(answers, existing)
+    settings = build_settings(answers)
+    if existing is not None:  # integration settings survive a re-run of onboarding
+        old = existing.settings
+        settings.email_daily_cap = old.email_daily_cap
+        settings.email_warmup = old.email_warmup
+        settings.social_daily_cap = old.social_daily_cap
+        if answers.email_provider is None and old.email_provider in integrations:
+            settings.email_provider = old.email_provider
+        if answers.hosting_enabled is None and "hosting" in integrations:
+            settings.hosting_enabled = old.hosting_enabled
     return GuardConfig(
-        settings=build_settings(answers),
+        settings=settings,
         host=answers.guard_host or base.host,
         port=answers.guard_port or base.port,
         public_base_url=base.public_base_url,
@@ -242,7 +283,31 @@ def build_guard_config(answers: OnboardAnswers, existing: GuardConfig | None = N
         telegram=GuardTelegramConfig(
             bot_token=answers.guard_bot_token.strip(), owner_chat_id=answers.owner_chat_id.strip()
         ),
+        integrations=integrations,
     )
+
+
+def build_guard_integrations(
+    answers: OnboardAnswers, existing: GuardConfig | None = None, *, now: str | None = None
+) -> dict[str, IntegrationConfig]:
+    """Guard-held integrations: existing ones are kept, the ones chosen now are (re)written.
+
+    ``connected_at`` starts now, except when the non-secret fields are unchanged (for Gmail the
+    address), so re-entering a password does not restart the warm-up.
+    """
+    from cashmaxx.integrations_catalog import get_spec
+
+    stamp = now or datetime.now(UTC).isoformat()
+    result = {k: v.model_copy(deep=True) for k, v in (existing.integrations if existing else {}).items()}
+    for iid, raw in answers.integrations.items():
+        spec = get_spec(iid)
+        fields = {k: v.strip() for k, v in raw.items() if v.strip()}
+        prev = result.get(iid)
+        plain = [f.name for f in spec.fields if not f.secret]
+        same = prev is not None and all(prev.fields.get(n, "") == fields.get(n, "") for n in plain)
+        since = prev.connected_at if prev is not None and same and prev.connected_at else stamp
+        result[iid] = IntegrationConfig(fields=fields, connected_at=since)
+    return result
 
 
 def telegram_configured(config: Config) -> bool:
@@ -266,6 +331,11 @@ def apply_nanobot_config(config: Config, answers: OnboardAnswers) -> Config:
     config.cashmaxx = CashmaxxAgentConfig(guard_url=answers.guard_url, agent_token=answers.agent_token)
     config.tools.restrict_to_workspace = True
     apply_exec_sandbox(config)
+    if answers.agent_integrations:
+        from cashmaxx.agent_integrations import apply_agent_integration
+
+        for iid, values in answers.agent_integrations.items():
+            apply_agent_integration(config, iid, values)
     if telegram_configured(config):
         telegram = getattr(config.channels, "telegram")
         if isinstance(telegram, dict):
@@ -469,6 +539,106 @@ class QuestionaryPrompter:
         )))
 
 
+def field_applies(integration_id: str, name: str, values: Mapping[str, str]) -> bool:
+    """Fields that only matter for one provider are skipped for the others."""
+    provider = values.get("provider", "")
+    if integration_id == "browser" and name.startswith("browserbase"):
+        return provider == "browserbase"
+    if integration_id == "hosting" and name == "tunnelToken":
+        return provider == "cloudflare_token"
+    if integration_id == "search" and name == "apiKey":
+        return provider != ""
+    return True
+
+
+def field_required(integration_id: str, spec: FieldSpec, values: Mapping[str, str]) -> bool:
+    provider = values.get("provider", "")
+    if integration_id == "browser" and spec.name == "browserbaseApiKey":
+        return provider == "browserbase"
+    if integration_id == "hosting" and spec.name == "tunnelToken":
+        return provider == "cloudflare_token"
+    if integration_id == "search" and spec.name == "apiKey":
+        return provider == "brave-search"
+    return spec.required
+
+
+def collect_integration_fields(
+    p: Prompter,
+    spec: IntegrationSpec,
+    current: Mapping[str, Mapping[str, Any]] | None = None,
+    *,
+    connected: bool = False,
+) -> dict[str, str]:
+    """Ask for an integration's fields. Secrets are hidden.
+
+    ``current`` maps field name -> ``{"set": bool, "value": str | None}`` (the owner listing).
+    When the integration is already connected, an empty answer keeps the stored value, so the
+    result may hold empty strings; callers drop or pass them through as their API expects.
+    """
+    current = current or {}
+    values: dict[str, str] = {}
+    for f in spec.fields:
+        if not field_applies(spec.id, f.name, values):
+            continue
+        info = current.get(f.name, {})
+        keep = connected or bool(info.get("set"))
+        required = field_required(spec.id, f, values) and not keep
+        label = f"{spec.label} {f.label}"
+        hint = " (leave empty to keep)" if keep else ("" if required else " (optional)")
+        if f.placeholder and not keep:
+            hint += f" [{f.placeholder}]"
+        if f.choices:
+            now = str(info.get("value") or "")
+            default = now if now in f.choices else f.choices[0]
+            values[f.name] = p.select(label, [(c, c) for c in f.choices], default=default)
+        elif f.secret:
+            while True:
+                value = p.secret(label + hint).strip()
+                if value or not required:
+                    break
+                p.say(f"[red]{f.label} is required.[/red]")
+            values[f.name] = value
+        else:
+            values[f.name] = p.text(
+                label + hint, str(info.get("value") or ""),
+                validate=lambda v, r=required: "Required" if r and not v.strip() else None,
+            ).strip()
+    return values
+
+
+def _collect_extra_integrations(p: Prompter, answers: OnboardAnswers) -> None:
+    """Optional step: more integrations. Fills ``answers`` in place."""
+    picks = p.checkbox(
+        "More integrations (optional; add or change them later with `cashmaxx connect`)",
+        [(s.id, f"{s.label}: {s.summary}") for s in EXTRA_INTEGRATIONS], checked=set(),
+    )
+    by_id = {s.id: s for s in EXTRA_INTEGRATIONS}
+    for iid in picks:
+        spec = by_id[iid]
+        p.say(f"\n[bold]{spec.label}[/bold]: {spec.summary}"
+              + (f" Get the credentials at {spec.docs_url}" if spec.docs_url else ""))
+        values = collect_integration_fields(p, spec)
+        if spec.kind == "agent":
+            answers.agent_integrations[iid] = values
+        else:
+            answers.integrations[iid] = values
+    emails = [i for i in EMAIL_INTEGRATIONS if i in answers.integrations]
+    if emails:
+        answers.email_provider = cast(EmailProvider, p.select(
+            "Email provider the agent sends from",
+            [(i, by_id[i].label) for i in emails] + [("none", "none: no outbound email yet")],
+            default=emails[0],
+        ))
+        if answers.email_provider == "gmail":
+            p.say(GMAIL_WARMUP_TEXT)
+    if "hosting" in answers.integrations:
+        answers.hosting_enabled = p.confirm(
+            "Turn on public hosting now (hostingEnabled)?", default=False
+        )
+    if any(i in answers.integrations for i in ("bluesky", "x", "reddit")):
+        p.say(SOCIAL_CAP_TEXT)
+
+
 def _decimal_problem(value: str) -> str | None:
     try:
         parse_decimal(value)
@@ -647,6 +817,8 @@ def collect_answers(p: Prompter, config: Config, services: Services | None = Non
         owner_chat_id=chat_id.strip(), owner_pin=pin,
         agent_token=generate_agent_token(),  # 12.
     )
+    # 11b. More integrations (optional)
+    _collect_extra_integrations(p, answers)
     build_settings(answers)  # validate the combination before anything is written
     return CollectResult(answers=answers, wallet_address=wallet_address, warnings=warnings)
 
@@ -737,6 +909,9 @@ def summary_lines(outcome: OnboardOutcome, answers: OnboardAnswers) -> list[str]
         f"daily cap ${answers.daily_cap_usd})",
         f"  Model:          openrouter {answers.model}",
     ]
+    extras = sorted({*answers.integrations, *answers.agent_integrations})
+    if extras:
+        lines.append(f"  Integrations:   {', '.join(extras)} (see `cashmaxx integrations`)")
     if outcome.wallet_address:
         lines.append(f"  Fund this address with USDC on {answers.network}: {outcome.wallet_address}")
     if outcome.skipped_files:

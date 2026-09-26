@@ -96,6 +96,11 @@ export function settingsBody(overrides: Record<string, unknown> = {}) {
     publicPnl: false,
     frozen: false,
     frozenReason: null,
+    emailProvider: "none",
+    emailDailyCap: 50,
+    emailWarmup: true,
+    socialDailyCap: 3,
+    hostingEnabled: false,
     ...overrides,
   };
 }

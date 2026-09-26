@@ -149,7 +149,8 @@ async def test_settings_update_refreshes_workspace(fake_guard: FakeGuard, worksp
                               {"patch": {"budgetUsd": "77"}, "owner_session": "sess"})
     response = await _dispatch(request, path)
     assert response.status_code == 200
-    assert fake_guard.last_json() == {"budgetUsd": "77"}
+    patch = next(r for r in fake_guard.requests if r.method == "PATCH")
+    assert json.loads(patch.content) == {"budgetUsd": "77"}
     assert "77.00 USD" in (workspace / "RULES.md").read_text()
     assert (workspace / "skills" / "cashmaxx-bounties").exists()
     assert not (workspace / "skills" / "cashmaxx-x402-apis").exists()

@@ -323,5 +323,14 @@ ask the running agent to reconnect MCP servers (no gateway restart).
     cashmaxx disconnect <id>
     cashmaxx test <id>
 
-`cashmaxx onboard` offers an optional "More integrations" checklist at the end that runs `connect`
-for each chosen one.
+`cashmaxx onboard` offers an optional "More integrations" checklist at the end. The guard is not
+running yet, so onboarding writes guard-kind fields straight into `GuardConfig.integrations` (with
+`connected_at`) and agent-kind ones into nanobot's config.
+
+Hosting refusal codes: `hosting_disabled`, `hosting_not_connected`, `port_not_allowed`,
+`too_many_tunnels`. Frozen is 423 for email/social/hosting (`/spend` keeps 409); branch on `code`.
+
+Browser lockdown (`agent_integrations._playwright_server`): Playwright MCP runs outside the exec
+sandbox, so it is pinned to a verified version, given a workspace profile and output dir, blocks
+loopback and metadata origins, and gets an explicit tool allowlist that leaves out
+`browser_run_code_unsafe` (arbitrary JS in the server process). `file://` is refused by default.

@@ -2174,6 +2174,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "集成",
       "settings": "Settings"
     },
     "actions": {
@@ -2411,6 +2412,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "仅显示状态",
+      "lockedBody": "连接、测试和断开连接都需要所有者 PIN。",
+      "unlock": "解锁以管理",
+      "categories": {
+        "money": "资金",
+        "compute": "算力",
+        "approvals": "审批",
+        "email": "邮件",
+        "social": "社交",
+        "hosting": "托管",
+        "browser": "浏览器",
+        "code": "代码",
+        "search": "搜索",
+        "other": "其他"
+      },
+      "status": {
+        "connected": "已连接",
+        "notConnected": "未连接",
+        "testFailed": "测试失败"
+      },
+      "lastTestOk": "测试通过",
+      "lastTestFailed": "测试失败",
+      "neverTested": "尚未测试",
+      "docs": "文档",
+      "actions": {
+        "connect": "连接",
+        "edit": "编辑",
+        "test": "测试",
+        "disconnect": "断开连接"
+      },
+      "testPassed": "{{label}}：测试通过。{{message}}",
+      "testFailedMessage": "{{label}}：测试失败。{{message}}",
+      "saved": "已保存 {{label}}。运行一次测试确认它可用。",
+      "disconnected": "已断开 {{label}}。",
+      "settingSaved": "已保存。",
+      "saveSetting": "保存",
+      "perDay": "/天",
+      "capRange": "请输入 {{min}} 到 {{max}} 之间的整数。",
+      "dialog": {
+        "connectTitle": "连接 {{label}}",
+        "editTitle": "编辑 {{label}}",
+        "guardKind": "这些凭据由守护进程保管，代理永远看不到。",
+        "agentKind": "这些设置会写入代理自身的工具配置。",
+        "save": "用 PIN 保存",
+        "required": "必填",
+        "requiredError": "此项为必填。",
+        "keepSecret": "已保存。留空则保持不变。",
+        "keepPlaceholder": "已保存（未更改）",
+        "choose": "请选择…"
+      },
+      "disconnect": {
+        "title": "断开 {{label}}？",
+        "body": "已保存的凭据会被删除，在你重新连接之前，代理将失去这项能力。",
+        "emailBody": "已保存的凭据会被删除。如果它是发件提供方，邮件功能会关闭。",
+        "confirm": "断开连接"
+      },
+      "email": {
+        "title": "邮件发送",
+        "provider": "发件提供方",
+        "providerHint": "代理用来发信的已连接邮箱。选择“无”会关闭邮件。",
+        "connectFirst": "在下方连接 Gmail 或 AgentMail，代理才能发送邮件。",
+        "providers": {
+          "none": "无",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "每日邮件上限",
+        "dailyCapHint": "每个 UTC 日的收件人数，统计所有发送。",
+        "warmup": "Gmail 预热",
+        "warmupHint": "在四周内逐步提高上限，避免新账号被标记为垃圾邮件。",
+        "warmupLine": "第 {{week}}/{{weeks}} 周（第 {{day}} 天）：今天最多 {{cap}} 封，自 {{date}} 起每天 {{next}} 封。",
+        "warmupDone": "预热完成：每天最多 {{cap}} 封。",
+        "warmupOff": "预热已关闭：每天最多 {{cap}} 封。",
+        "warmupNotStarted": "连接 Gmail 后开始预热。"
+      },
+      "social": {
+        "title": "社交发帖",
+        "dailyCap": "每日发帖上限",
+        "dailyCapHint": "Bluesky、X 和 Reddit 合计的每个 UTC 日发帖数。"
+      },
+      "hosting": {
+        "enabled": "允许公开托管",
+        "enabledHint": "允许代理把它运行的服务放到公开网址上。守护进程和网关的端口永远不会公开。"
+      },
+      "items": {
+        "openrouter": "运行代理的模型；其花费计为算力成本。",
+        "cdp": "Base 上的 USDC 钱包。只有守护进程能转移资金。",
+        "stripe": "数字产品的商品和支付链接。不能提现。",
+        "telegram": "通过守护进程自己的机器人，在手机上审批和接收提醒。",
+        "gmail": "代理自己的 Gmail：读取收件箱，并在每日上限内发信。",
+        "agentmail": "专为代理打造的邮箱。在每日上限内收发邮件。",
+        "bluesky": "在每日社交上限内发布到 Bluesky。",
+        "x": "在每日社交上限内发布到 X。",
+        "reddit": "在每日社交上限内发布到允许发帖的子版块。",
+        "hosting": "通过 Cloudflare 隧道把代理的服务放到公开网址上。",
+        "browser": "使用独立配置文件的真实浏览器：本地 Playwright 或 Browserbase。",
+        "github": "代理用于赏金任务的 GitHub 账号：Issue、Fork 和 Pull Request。",
+        "search": "更好的网页搜索和抓取：Brave、Exa 或 Firecrawl。"
+      },
+      "fields": {
+        "apiKey": "API 密钥",
+        "apiKeyId": "API 密钥 ID",
+        "apiKeySecret": "API 密钥私钥",
+        "walletSecret": "钱包密钥",
+        "restrictedKey": "受限密钥",
+        "botToken": "机器人令牌",
+        "ownerChatId": "你的聊天 ID",
+        "address": "Gmail 地址",
+        "appPassword": "应用专用密码",
+        "inboxId": "邮箱地址",
+        "handle": "用户名",
+        "apiSecret": "API 密钥",
+        "accessToken": "访问令牌",
+        "accessSecret": "访问令牌密钥",
+        "clientId": "客户端 ID",
+        "clientSecret": "客户端密钥",
+        "username": "用户名",
+        "password": "密码",
+        "provider": "提供方",
+        "tunnelToken": "隧道令牌",
+        "browserbaseApiKey": "Browserbase API 密钥",
+        "browserbaseProjectId": "Browserbase 项目 ID",
+        "token": "细粒度令牌"
+      },
+      "choices": {
+        "cloudflare_quick": "Cloudflare 快速隧道",
+        "cloudflare_token": "Cloudflare 隧道（令牌）",
+        "playwright": "Playwright（本地）",
+        "browserbase": "Browserbase（云端）",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

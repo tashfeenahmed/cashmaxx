@@ -1,4 +1,5 @@
-"""``cashmaxx`` command line: onboard, guard, status, freeze, unfreeze, settings, workspace."""
+"""``cashmaxx`` command line: onboard, guard, status, freeze, unfreeze, settings, workspace,
+integrations, connect, disconnect, test."""
 
 from __future__ import annotations
 
@@ -6,12 +7,17 @@ import asyncio
 import json
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
+import click
 import typer
 
 from cashmaxx.config import CashmaxxAgentConfig, CashmaxxSettings
 from cashmaxx.guard.client import JSON, GuardClient, GuardError, GuardUnavailable
+from cashmaxx.integrations_catalog import INTEGRATIONS, IntegrationSpec, get_spec
+
+if TYPE_CHECKING:
+    from nanobot.config.schema import Config
 
 main = typer.Typer(
     name="cashmaxx",
@@ -26,7 +32,8 @@ T = TypeVar("T")
 ConfigOption = typer.Option(None, "--config", "-c", help="nanobot config file")
 
 
-def _agent_config(config_path: str | None) -> CashmaxxAgentConfig:
+def _load(config_path: str | None) -> tuple[Config, Path, CashmaxxAgentConfig]:
+    """nanobot's full config, its path and the Cashmaxx part (exits when missing)."""
     from nanobot.config.loader import get_config_path, load_config, set_config_path
 
     path = Path(config_path).expanduser() if config_path else get_config_path()
@@ -35,12 +42,17 @@ def _agent_config(config_path: str | None) -> CashmaxxAgentConfig:
     if not path.exists():
         typer.echo(f"No nanobot config at {path}. Run `cashmaxx onboard` first.", err=True)
         raise typer.Exit(1)
-    cfg = load_config(path).cashmaxx
+    config = load_config(path)
+    cfg = config.cashmaxx
     if cfg is None:
         typer.echo("Cashmaxx is not configured in the nanobot config. Run `cashmaxx onboard`.",
                    err=True)
         raise typer.Exit(1)
-    return cfg
+    return config, path, cfg
+
+
+def _agent_config(config_path: str | None) -> CashmaxxAgentConfig:
+    return _load(config_path)[2]
 
 
 def _client(
@@ -230,6 +242,275 @@ def workspace(
     report = install_workspace(load_config().workspace_path, settings, force=force)
     for path, outcome in report.results.items():
         typer.echo(f"{outcome:9} {path}")
+
+
+# --- integrations ------------------------------------------------------------------------------
+
+PinOption = typer.Option(None, "--pin", help="Owner PIN (prompted if omitted)")
+IdArgument = typer.Argument(..., help="Integration id, e.g. gmail (see `cashmaxx integrations`)")
+_SOCIAL = ("bluesky", "x", "reddit")
+
+
+class TyperPrompter:
+    """The onboarding ``Prompter`` on plain terminal prompts (works with piped input)."""
+
+    def say(self, text: str) -> None:
+        from rich.text import Text
+
+        typer.echo(Text.from_markup(text).plain)
+
+    def select(self, message: str, choices: list[tuple[str, str]], default: str | None = None) -> str:
+        values = [value for value, _ in choices]
+        return str(typer.prompt(message, default=default, type=click.Choice(values)))
+
+    def checkbox(self, message: str, choices: list[tuple[str, str]], checked: set[str]) -> list[str]:
+        values = [value for value, _ in choices]
+        raw = str(typer.prompt(f"{message} (comma separated: {', '.join(values)})",
+                               default=",".join(sorted(checked)), show_default=bool(checked)))
+        return [v.strip() for v in raw.split(",") if v.strip() in values]
+
+    def text(self, message: str, default: str = "",
+             validate: Callable[[str], str | None] | None = None) -> str:
+        while True:
+            value = str(typer.prompt(message, default=default, show_default=bool(default)))
+            problem = validate(value) if validate is not None else None
+            if problem is None:
+                return value
+            typer.echo(problem, err=True)
+
+    def secret(self, message: str) -> str:
+        return str(typer.prompt(message, default="", hide_input=True, show_default=False))
+
+    def confirm(self, message: str, default: bool = True) -> bool:
+        return typer.confirm(message, default=default)
+
+    def autocomplete(self, message: str, choices: list[str], default: str) -> str:
+        return self.text(message, default)
+
+
+def _spec(integration_id: str) -> IntegrationSpec:
+    try:
+        return get_spec(integration_id)
+    except KeyError:
+        known = ", ".join(s.id for s in INTEGRATIONS)
+        raise typer.BadParameter(f"unknown integration {integration_id!r}. Known: {known}") from None
+
+
+def _owner_login(cfg: CashmaxxAgentConfig, pin: str) -> str:
+    async def _go() -> str:
+        async with _client(cfg, anonymous=True) as anon:
+            return str((await anon.owner_session(pin))["session"])
+
+    return _run(_go)
+
+
+def _as_owner(cfg: CashmaxxAgentConfig, session: str,
+              fn: Callable[[GuardClient], Awaitable[JSON]]) -> JSON:
+    async def _go() -> JSON:
+        async with _client(cfg, owner_session=session) as owner:
+            return await fn(owner)
+
+    return _run(_go)
+
+
+def _items(payload: JSON) -> dict[str, dict[str, Any]]:
+    raw: object = payload.get("integrations", [])
+    items: dict[str, dict[str, Any]] = {}
+    if isinstance(raw, list):
+        for entry in cast(list[object], raw):
+            if isinstance(entry, dict):
+                item = {str(k): v for k, v in cast(dict[object, Any], entry).items()}
+                items[str(item.get("id", ""))] = item
+    return items
+
+
+def _yes_no(value: object) -> str:
+    return "yes" if value is True else "no" if value is False else "?"
+
+
+def _last_test(item: dict[str, Any]) -> str:
+    test: object = item.get("last_test")
+    if not isinstance(test, dict):
+        return "-"
+    data = cast(dict[str, Any], test)
+    status = "ok" if data.get("ok") else "failed"
+    message = str(data.get("message") or "")
+    return f"{status}: {message}"[:60] if message else status
+
+
+@main.command()
+def integrations(
+    config: str | None = ConfigOption,
+    pin: str | None = typer.Option(None, "--pin", help="Owner PIN: adds the last test results"),
+) -> None:
+    """List integrations: which are connected and how their last test went."""
+    from rich.console import Console
+    from rich.table import Table
+
+    from cashmaxx.agent_integrations import agent_integration_item
+
+    nb_config, _, cfg = _load(config)
+    if pin:
+        session = _owner_login(cfg, pin)
+        guard_items = _items(_as_owner(cfg, session, lambda c: c.owner_integrations()))
+    else:
+        async def _go() -> JSON:
+            async with _client(cfg) as client:
+                return await client.integrations()
+
+        guard_items = _items(_run(_go))
+
+    table = Table("id", "label", "kind", "connected", "last test")
+    for spec in INTEGRATIONS:
+        if spec.kind == "agent":
+            item = agent_integration_item(nb_config, spec.id, owner=False)
+        else:
+            item = guard_items.get(spec.id, {})
+        table.add_row(spec.id, spec.label, spec.kind, _yes_no(item.get("connected")),
+                      _last_test(item) if pin else "-")
+    Console(width=120).print(table)
+
+
+def _print_test(label: str, result: JSON) -> bool:
+    ok = bool(result.get("ok"))
+    message = str(result.get("message") or "")
+    typer.echo(f"{label} test {'passed' if ok else 'FAILED'}" + (f": {message}" if message else ""))
+    return ok
+
+
+def _after_connect(cfg: CashmaxxAgentConfig, session: str, spec: IntegrationSpec) -> None:
+    """Offer the settings that switch the new capability on."""
+    from cashmaxx.onboarding import GMAIL_WARMUP_TEXT, SOCIAL_CAP_TEXT
+
+    patch: JSON = {}
+    if spec.id in ("gmail", "agentmail"):
+        if spec.id == "gmail":
+            typer.echo(GMAIL_WARMUP_TEXT)
+        if typer.confirm(f"Send the agent's email from {spec.label} (emailProvider)?", default=True):
+            patch["emailProvider"] = spec.id
+    elif spec.id == "hosting":
+        if typer.confirm("Turn on public hosting (hostingEnabled)?", default=False):
+            patch["hostingEnabled"] = True
+    elif spec.id in _SOCIAL:
+        typer.echo(SOCIAL_CAP_TEXT)
+    if patch:
+        result = _as_owner(cfg, session, lambda c: c.update_settings(patch))
+        _refresh_workspace(result)
+        typer.echo(", ".join(patch) + " updated.")
+
+
+@main.command()
+def connect(
+    integration_id: str = IdArgument,
+    config: str | None = ConfigOption,
+    pin: str | None = PinOption,
+) -> None:
+    """Connect or update an integration (owner only), then test it."""
+    from cashmaxx.onboarding import collect_integration_fields
+
+    spec = _spec(integration_id)
+    nb_config, path, cfg = _load(config)
+    prompter = TyperPrompter()
+    prompter.say(f"{spec.label}: {spec.summary}"
+                 + (f" Credentials: {spec.docs_url}" if spec.docs_url else ""))
+
+    if spec.kind == "agent":
+        from cashmaxx.agent_integrations import agent_integration_item
+
+        item = agent_integration_item(nb_config, spec.id, owner=True)
+        current = {str(f["name"]): f for f in cast(list[dict[str, Any]], item["fields"])}
+        values = collect_integration_fields(prompter, spec, current,
+                                            connected=bool(item["connected"]))
+        session = _owner_login(cfg, _ask_pin(pin))
+        _connect_agent(cfg, session, nb_config, path, spec, values)
+        return
+
+    async def _listing() -> JSON:
+        async with _client(cfg) as client:
+            return await client.integrations()
+
+    connected = _items(_run(_listing)).get(spec.id, {}).get("connected") is True
+    values = collect_integration_fields(prompter, spec, connected=connected)
+    secret = {f.name for f in spec.fields if f.secret}
+    # An empty secret keeps the stored one; an empty plain field is left out so it is kept too.
+    fields = {k: v for k, v in values.items() if v or (k in secret and connected)}
+    session = _owner_login(cfg, _ask_pin(pin))
+    _as_owner(cfg, session, lambda c: c.update_integration(spec.id, fields))
+    typer.echo(f"{spec.label} saved.")
+    _print_test(spec.label, _as_owner(cfg, session, lambda c: c.test_integration(spec.id)))
+    _after_connect(cfg, session, spec)
+
+
+def _connect_agent(cfg: CashmaxxAgentConfig, session: str, nb_config: Config, path: Path,
+                   spec: IntegrationSpec, values: dict[str, str]) -> None:
+    from cashmaxx.agent_integrations import AgentIntegrationError, apply_agent_integration
+    from nanobot.config.loader import save_config
+
+    _as_owner(cfg, session, lambda c: c.owner_check())
+    try:
+        server = apply_agent_integration(nb_config, spec.id, values)
+    except AgentIntegrationError as exc:
+        typer.echo(f"Could not configure {spec.label}: {exc}", err=True)
+        raise typer.Exit(1) from None
+    save_config(nb_config, path)
+    typer.echo(f"{spec.label} saved as MCP server '{server}' in {path}. The gateway picks it up "
+               "on its next MCP reload (or restart `nanobot gateway`).")
+
+
+@main.command()
+def disconnect(
+    integration_id: str = IdArgument,
+    config: str | None = ConfigOption,
+    pin: str | None = PinOption,
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation"),
+) -> None:
+    """Disconnect an integration and forget its credentials (owner only)."""
+    spec = _spec(integration_id)
+    nb_config, path, cfg = _load(config)
+    if not yes and not typer.confirm(f"Disconnect {spec.label} and delete its credentials?",
+                                     default=False):
+        raise typer.Exit(1)
+    session = _owner_login(cfg, _ask_pin(pin))
+    if spec.kind == "guard":
+        _as_owner(cfg, session, lambda c: c.remove_integration(spec.id))
+        typer.echo(f"{spec.label} disconnected.")
+        return
+
+    from cashmaxx.agent_integrations import remove_agent_integration
+    from nanobot.config.loader import save_config
+
+    _as_owner(cfg, session, lambda c: c.owner_check())
+    removed = remove_agent_integration(nb_config, spec.id)
+    if not removed:
+        typer.echo(f"{spec.label} was not connected.")
+        return
+    save_config(nb_config, path)
+    typer.echo(f"{spec.label} disconnected (removed MCP server {', '.join(removed)}). The gateway "
+               "drops it on its next MCP reload or restart.")
+
+
+@main.command("test")
+def test_cmd(
+    integration_id: str = IdArgument,
+    config: str | None = ConfigOption,
+    pin: str | None = PinOption,
+) -> None:
+    """Run a live check of an integration (owner only for guard integrations)."""
+    spec = _spec(integration_id)
+    nb_config, _, cfg = _load(config)
+    if spec.kind == "agent":
+        from cashmaxx.agent_integrations import active_server
+
+        server = active_server(nb_config, spec.id)
+        if server is None:
+            typer.echo(f"{spec.label} is not connected. Run `cashmaxx connect {spec.id}`.")
+            raise typer.Exit(1)
+        typer.echo(f"{spec.label} is configured as MCP server '{server}'. The gateway connects "
+                   "to it when it loads MCP servers; check `nanobot gateway` logs for errors.")
+        return
+    session = _owner_login(cfg, _ask_pin(pin))
+    if not _print_test(spec.label, _as_owner(cfg, session, lambda c: c.test_integration(spec.id))):
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

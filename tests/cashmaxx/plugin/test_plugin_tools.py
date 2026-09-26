@@ -253,7 +253,7 @@ def test_entry_points_resolve_to_tools() -> None:
 
     eps = {ep.name: ep.load() for ep in entry_points(group="nanobot.tools")
            if ep.name.startswith("cashmaxx_")}
-    assert len(eps) == 9
+    assert len(eps) == 15
     for name, cls in eps.items():
         tool = cls()
         assert tool.name == name and tool.description

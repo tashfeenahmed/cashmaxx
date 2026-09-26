@@ -1974,6 +1974,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "Intégrations",
       "settings": "Settings"
     },
     "actions": {
@@ -2211,6 +2212,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "États uniquement",
+      "lockedBody": "Connecter, tester et déconnecter demande le code PIN du propriétaire.",
+      "unlock": "Déverrouiller pour gérer",
+      "categories": {
+        "money": "Argent",
+        "compute": "Calcul",
+        "approvals": "Approbations",
+        "email": "E-mail",
+        "social": "Réseaux sociaux",
+        "hosting": "Hébergement",
+        "browser": "Navigateur",
+        "code": "Code",
+        "search": "Recherche",
+        "other": "Autres"
+      },
+      "status": {
+        "connected": "Connecté",
+        "notConnected": "Non connecté",
+        "testFailed": "Test échoué"
+      },
+      "lastTestOk": "Test réussi",
+      "lastTestFailed": "Test échoué",
+      "neverTested": "Pas encore testé",
+      "docs": "Documentation",
+      "actions": {
+        "connect": "Connecter",
+        "edit": "Modifier",
+        "test": "Tester",
+        "disconnect": "Déconnecter"
+      },
+      "testPassed": "{{label}} : test réussi. {{message}}",
+      "testFailedMessage": "{{label}} : le test a échoué. {{message}}",
+      "saved": "{{label}} enregistré. Lancez un test pour vérifier qu'il fonctionne.",
+      "disconnected": "{{label}} déconnecté.",
+      "settingSaved": "Enregistré.",
+      "saveSetting": "Enregistrer",
+      "perDay": "/jour",
+      "capRange": "Saisissez un nombre entier de {{min}} à {{max}}.",
+      "dialog": {
+        "connectTitle": "Connecter {{label}}",
+        "editTitle": "Modifier {{label}}",
+        "guardKind": "Le gardien conserve ces identifiants. L'agent ne les voit jamais.",
+        "agentKind": "Ces réglages vont dans la configuration des outils de l'agent lui-même.",
+        "save": "Enregistrer avec le PIN",
+        "required": "obligatoire",
+        "requiredError": "Ce champ est obligatoire.",
+        "keepSecret": "Enregistré. Laissez vide pour le conserver.",
+        "keepPlaceholder": "Enregistré (inchangé)",
+        "choose": "Choisir…"
+      },
+      "disconnect": {
+        "title": "Déconnecter {{label}} ?",
+        "body": "Les identifiants enregistrés sont supprimés et l'agent perd cette capacité jusqu'à ce que vous la reconnectiez.",
+        "emailBody": "Les identifiants enregistrés sont supprimés. S'il s'agit du fournisseur d'envoi, l'e-mail est désactivé.",
+        "confirm": "Déconnecter"
+      },
+      "email": {
+        "title": "Envoi d'e-mails",
+        "provider": "Fournisseur d'envoi",
+        "providerHint": "La boîte connectée depuis laquelle l'agent envoie. Aucun désactive l'e-mail.",
+        "connectFirst": "Connectez Gmail ou AgentMail ci-dessous pour que l'agent puisse envoyer des e-mails.",
+        "providers": {
+          "none": "Aucun",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "Plafond quotidien d'e-mails",
+        "dailyCapHint": "Destinataires par jour UTC, tous envois confondus.",
+        "warmup": "Montée en charge Gmail",
+        "warmupHint": "Augmente le plafond sur quatre semaines pour qu'un nouveau compte ne soit pas signalé comme spam.",
+        "warmupLine": "Semaine {{week}} sur {{weeks}} (jour {{day}}) : jusqu'à {{cap}} e-mails aujourd'hui, {{next}}/jour à partir du {{date}}.",
+        "warmupDone": "Montée en charge terminée : jusqu'à {{cap}} e-mails par jour.",
+        "warmupOff": "Montée en charge désactivée : jusqu'à {{cap}} e-mails par jour.",
+        "warmupNotStarted": "La montée en charge commence quand Gmail est connecté."
+      },
+      "social": {
+        "title": "Publication sur les réseaux",
+        "dailyCap": "Plafond quotidien de publications",
+        "dailyCapHint": "Publications par jour UTC sur Bluesky, X et Reddit au total."
+      },
+      "hosting": {
+        "enabled": "Autoriser l'hébergement public",
+        "enabledHint": "Permet à l'agent de publier sur une URL publique un service qu'il exécute. Les ports du gardien et de la passerelle ne sont jamais exposés."
+      },
+      "items": {
+        "openrouter": "Exécute le modèle de l'agent ; ses dépenses comptent comme coût de calcul.",
+        "cdp": "Le portefeuille USDC sur Base. Seul le gardien peut déplacer de l'argent.",
+        "stripe": "Produits et liens de paiement pour produits numériques. Aucun virement sortant.",
+        "telegram": "Approbations et alertes sur votre téléphone, via le bot propre au gardien.",
+        "gmail": "Le Gmail de l'agent : lire la boîte et envoyer dans la limite du plafond quotidien.",
+        "agentmail": "Une boîte conçue pour les agents. Lire et envoyer dans la limite du plafond quotidien.",
+        "bluesky": "Publier sur Bluesky dans la limite du plafond social quotidien.",
+        "x": "Publier sur X dans la limite du plafond social quotidien.",
+        "reddit": "Publier dans les subreddits qui l'autorisent, dans la limite du plafond social quotidien.",
+        "hosting": "Publier un service de l'agent sur une URL publique via un tunnel Cloudflare.",
+        "browser": "Un vrai navigateur avec son propre profil : Playwright en local ou Browserbase.",
+        "github": "Le compte GitHub de l'agent pour les primes : issues, forks et pull requests.",
+        "search": "Meilleure recherche web et extraction : Brave, Exa ou Firecrawl."
+      },
+      "fields": {
+        "apiKey": "Clé API",
+        "apiKeyId": "ID de la clé API",
+        "apiKeySecret": "Secret de la clé API",
+        "walletSecret": "Secret du portefeuille",
+        "restrictedKey": "Clé restreinte",
+        "botToken": "Jeton du bot",
+        "ownerChatId": "Votre ID de discussion",
+        "address": "Adresse Gmail",
+        "appPassword": "Mot de passe d'application",
+        "inboxId": "Adresse de la boîte",
+        "handle": "Identifiant",
+        "apiSecret": "Secret API",
+        "accessToken": "Jeton d'accès",
+        "accessSecret": "Secret du jeton d'accès",
+        "clientId": "ID client",
+        "clientSecret": "Secret client",
+        "username": "Nom d'utilisateur",
+        "password": "Mot de passe",
+        "provider": "Fournisseur",
+        "tunnelToken": "Jeton du tunnel",
+        "browserbaseApiKey": "Clé API Browserbase",
+        "browserbaseProjectId": "ID de projet Browserbase",
+        "token": "Jeton à granularité fine"
+      },
+      "choices": {
+        "cloudflare_quick": "Tunnel rapide Cloudflare",
+        "cloudflare_token": "Tunnel Cloudflare (jeton)",
+        "playwright": "Playwright (local)",
+        "browserbase": "Browserbase (cloud)",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

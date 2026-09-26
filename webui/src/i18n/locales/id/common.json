@@ -1974,6 +1974,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "Integrasi",
       "settings": "Settings"
     },
     "actions": {
@@ -2211,6 +2212,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "Hanya status",
+      "lockedBody": "Menghubungkan, menguji, dan memutuskan memerlukan PIN pemilik.",
+      "unlock": "Buka untuk mengelola",
+      "categories": {
+        "money": "Uang",
+        "compute": "Komputasi",
+        "approvals": "Persetujuan",
+        "email": "Email",
+        "social": "Media sosial",
+        "hosting": "Hosting",
+        "browser": "Browser",
+        "code": "Kode",
+        "search": "Pencarian",
+        "other": "Lainnya"
+      },
+      "status": {
+        "connected": "Terhubung",
+        "notConnected": "Belum terhubung",
+        "testFailed": "Uji gagal"
+      },
+      "lastTestOk": "Uji berhasil",
+      "lastTestFailed": "Uji gagal",
+      "neverTested": "Belum diuji",
+      "docs": "Dokumentasi",
+      "actions": {
+        "connect": "Hubungkan",
+        "edit": "Edit",
+        "test": "Uji",
+        "disconnect": "Putuskan"
+      },
+      "testPassed": "{{label}}: uji berhasil. {{message}}",
+      "testFailedMessage": "{{label}}: uji gagal. {{message}}",
+      "saved": "{{label}} disimpan. Jalankan uji untuk memastikan berfungsi.",
+      "disconnected": "{{label}} diputuskan.",
+      "settingSaved": "Disimpan.",
+      "saveSetting": "Simpan",
+      "perDay": "/hari",
+      "capRange": "Masukkan bilangan bulat dari {{min}} sampai {{max}}.",
+      "dialog": {
+        "connectTitle": "Hubungkan {{label}}",
+        "editTitle": "Edit {{label}}",
+        "guardKind": "Guard menyimpan kredensial ini. Agen tidak pernah melihatnya.",
+        "agentKind": "Pengaturan ini masuk ke konfigurasi alat milik agen sendiri.",
+        "save": "Simpan dengan PIN",
+        "required": "wajib",
+        "requiredError": "Kolom ini wajib diisi.",
+        "keepSecret": "Tersimpan. Biarkan kosong untuk mempertahankannya.",
+        "keepPlaceholder": "Tersimpan (tidak diubah)",
+        "choose": "Pilih…"
+      },
+      "disconnect": {
+        "title": "Putuskan {{label}}?",
+        "body": "Kredensial yang tersimpan dihapus dan agen kehilangan kemampuan ini sampai Anda menghubungkannya lagi.",
+        "emailBody": "Kredensial yang tersimpan dihapus. Jika ini penyedia pengiriman, email dimatikan.",
+        "confirm": "Putuskan"
+      },
+      "email": {
+        "title": "Pengiriman email",
+        "provider": "Penyedia pengiriman",
+        "providerHint": "Kotak masuk terhubung yang dipakai agen untuk mengirim. Tidak ada mematikan email.",
+        "connectFirst": "Hubungkan Gmail atau AgentMail di bawah agar agen bisa mengirim email.",
+        "providers": {
+          "none": "Tidak ada",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "Batas email harian",
+        "dailyCapHint": "Penerima per hari UTC, dari semua pengiriman.",
+        "warmup": "Pemanasan Gmail",
+        "warmupHint": "Naikkan batas selama empat minggu agar akun baru tidak ditandai sebagai spam.",
+        "warmupLine": "Minggu {{week}} dari {{weeks}} (hari {{day}}): hingga {{cap}} email hari ini, {{next}}/hari mulai {{date}}.",
+        "warmupDone": "Pemanasan selesai: hingga {{cap}} email per hari.",
+        "warmupOff": "Pemanasan mati: hingga {{cap}} email per hari.",
+        "warmupNotStarted": "Pemanasan dimulai saat Gmail terhubung."
+      },
+      "social": {
+        "title": "Posting media sosial",
+        "dailyCap": "Batas posting harian",
+        "dailyCapHint": "Posting per hari UTC untuk Bluesky, X, dan Reddit digabung."
+      },
+      "hosting": {
+        "enabled": "Izinkan hosting publik",
+        "enabledHint": "Memungkinkan agen menaruh layanan yang dijalankannya di URL publik. Port guard dan gateway tidak pernah diekspos."
+      },
+      "items": {
+        "openrouter": "Menjalankan model agen; biayanya dihitung sebagai biaya komputasi.",
+        "cdp": "Dompet USDC di Base. Hanya guard yang bisa memindahkan uang.",
+        "stripe": "Produk dan tautan pembayaran untuk produk digital. Tanpa penarikan dana.",
+        "telegram": "Persetujuan dan peringatan di ponsel Anda, dari bot milik guard.",
+        "gmail": "Gmail milik agen: membaca kotak masuk dan mengirim dalam batas harian.",
+        "agentmail": "Kotak masuk yang dibuat untuk agen. Membaca dan mengirim dalam batas harian.",
+        "bluesky": "Posting ke Bluesky dalam batas sosial harian.",
+        "x": "Posting ke X dalam batas sosial harian.",
+        "reddit": "Posting ke subreddit yang mengizinkan, dalam batas sosial harian.",
+        "hosting": "Menaruh layanan agen di URL publik melalui tunnel Cloudflare.",
+        "browser": "Browser sungguhan dengan profil sendiri: Playwright lokal atau Browserbase.",
+        "github": "Akun GitHub agen untuk bounty: issue, fork, dan pull request.",
+        "search": "Pencarian web dan scraping yang lebih baik: Brave, Exa, atau Firecrawl."
+      },
+      "fields": {
+        "apiKey": "Kunci API",
+        "apiKeyId": "ID kunci API",
+        "apiKeySecret": "Rahasia kunci API",
+        "walletSecret": "Rahasia dompet",
+        "restrictedKey": "Kunci terbatas",
+        "botToken": "Token bot",
+        "ownerChatId": "ID chat Anda",
+        "address": "Alamat Gmail",
+        "appPassword": "Sandi aplikasi",
+        "inboxId": "Alamat kotak masuk",
+        "handle": "Handle",
+        "apiSecret": "Rahasia API",
+        "accessToken": "Token akses",
+        "accessSecret": "Rahasia token akses",
+        "clientId": "ID klien",
+        "clientSecret": "Rahasia klien",
+        "username": "Nama pengguna",
+        "password": "Kata sandi",
+        "provider": "Penyedia",
+        "tunnelToken": "Token tunnel",
+        "browserbaseApiKey": "Kunci API Browserbase",
+        "browserbaseProjectId": "ID proyek Browserbase",
+        "token": "Token terperinci"
+      },
+      "choices": {
+        "cloudflare_quick": "Tunnel cepat Cloudflare",
+        "cloudflare_token": "Tunnel Cloudflare (token)",
+        "playwright": "Playwright (lokal)",
+        "browserbase": "Browserbase (cloud)",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

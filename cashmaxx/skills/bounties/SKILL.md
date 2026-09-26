@@ -20,6 +20,24 @@ Skip anything that asks you to pay a fee up front, needs KYC in someone else's n
 anything like fake engagement, reviews, sign-ups or votes. Also skip security testing outside a
 written scope, and any "bounty" that is really spam or manipulation.
 
+## GitHub account (if connected)
+
+When the owner has connected GitHub, you have the GitHub MCP tools (`mcp_github_*`): search issues
+and code, read issues and pull requests, fork a repository, create branches and commits, open pull
+requests and comment. They act as the agent's own GitHub account (a fine-grained token the owner
+chose), never the owner's personal account.
+
+- Search for bounties with them (for example issues labelled `bounty` with recent activity) and
+  read the whole thread before claiming anything.
+- Everything you post on GitHub is public and in your account's name. The owner's bounty review
+  rule still applies: show the owner the diff and the PR text before opening the pull request.
+- One claim comment at most, no bumping, no drive-by PRs to issues you haven't claimed when the
+  project asks for claims, and never more than one open bounty PR at a time.
+- Never push to repositories you don't own except through your fork, and never touch secrets,
+  CI settings or workflows in someone else's project.
+- Without the GitHub integration, use `git` over HTTPS in the workspace and ask the owner to open
+  the pull request.
+
 ## Choosing one
 
 Score each candidate in the experiment log:

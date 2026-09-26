@@ -708,7 +708,7 @@ def _run_gateway(
         try:
             from cashmaxx.plugin import install as cashmaxx_install
 
-            cashmaxx_install(agent, cron, config)
+            cashmaxx_install(agent, cron, config, mcp_reload=mcp_provider.reload)
         except Exception:
             logger.exception("cashmaxx: plugin install failed; wallet tools still fail closed")
 

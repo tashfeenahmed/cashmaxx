@@ -8,7 +8,10 @@ What gets written:
   loop (other heartbeat tasks keep running), survives restarts, and needs no cron changes.
 - ``SOUL.md``: a managed block appended after the owner's own soul text.
 - ``RULES.md``: a whole managed file rendered from ``CashmaxxSettings``.
-- ``skills/cashmaxx-*/SKILL.md``: the core skill plus one per *enabled* earning method.
+- ``skills/cashmaxx-*/SKILL.md``: the core skill, one per *enabled* earning method, and one per
+  connected integration family (email, social, browser). ``integrations`` maps integration ids to
+  "connected"; when it is ``None`` (the guard could not be asked) the social and browser skills are
+  left as they are, and the email skill follows ``settings.email_provider``.
 
 User edits are never overwritten without ``force``. Each managed region carries the sha256 of the
 content we wrote. If the current content no longer matches that hash, someone edited it, and we
@@ -19,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from decimal import Decimal
 from importlib.resources import files
@@ -28,6 +32,7 @@ from typing import Literal
 from jinja2 import Environment, StrictUndefined
 
 from cashmaxx.config import ALL_EARNING_METHODS, CashmaxxSettings, EarningMethod
+from cashmaxx.integrations_catalog import INTEGRATIONS
 from cashmaxx.money import fmt_usd
 
 Outcome = Literal["created", "updated", "unchanged", "skipped", "removed"]
@@ -52,6 +57,42 @@ SKILLS: dict[str, tuple[str, EarningMethod | None]] = {
     "cashmaxx-bounties": ("bounties", "bounties"),
     "cashmaxx-agent-marketplaces": ("agent-marketplaces", "agent_marketplaces"),
 }
+
+Connected = Mapping[str, bool]
+SOCIAL_IDS = ("bluesky", "x", "reddit")
+EMAIL_IDS = ("gmail", "agentmail")
+
+
+def _email_gate(settings: CashmaxxSettings, connected: Connected | None) -> bool | None:
+    # The guard only lets emailProvider point at a connected account.
+    del connected
+    return settings.email_provider != "none"
+
+
+def _social_gate(settings: CashmaxxSettings, connected: Connected | None) -> bool | None:
+    if connected is None:
+        return None
+    return settings.social_daily_cap > 0 and any(connected.get(i) for i in SOCIAL_IDS)
+
+
+def _browser_gate(settings: CashmaxxSettings, connected: Connected | None) -> bool | None:
+    del settings
+    if connected is None:
+        return None
+    return bool(connected.get("browser"))
+
+
+# installed skill name -> (package source dir, gate). A gate returns True (install), False
+# (remove) or None (unknown: leave the installed file as it is).
+INTEGRATION_SKILLS: dict[
+    str, tuple[str, Callable[[CashmaxxSettings, Connected | None], bool | None]]
+] = {
+    "cashmaxx-email": ("email", _email_gate),
+    "cashmaxx-social": ("social", _social_gate),
+    "cashmaxx-browser": ("browser", _browser_gate),
+}
+
+_LABELS = {spec.id: spec.label for spec in INTEGRATIONS}
 
 _FILE_MARKER = re.compile(r"\n?<!-- cashmaxx:managed sha256=([0-9a-f]{16}) -->\s*\Z")
 
@@ -98,7 +139,17 @@ def _env() -> Environment:
     return Environment(undefined=StrictUndefined, keep_trailing_newline=True, autoescape=False)
 
 
-def _render(template: str, settings: CashmaxxSettings) -> str:
+def _connected_labels(connected: Connected | None, ids: tuple[str, ...] | None = None) -> str | None:
+    if connected is None:
+        return None
+    wanted = ids or tuple(_LABELS)
+    names = [_LABELS.get(i, i) for i in wanted if connected.get(i)]
+    return ", ".join(names)
+
+
+def _render(
+    template: str, settings: CashmaxxSettings, integrations: Connected | None = None
+) -> str:
     enabled = [METHOD_LABELS[m] for m in ALL_EARNING_METHODS if m in settings.earning_methods]
     text = _env().from_string(_package_text("templates", template)).render(
         s=settings,
@@ -106,12 +157,14 @@ def _render(template: str, settings: CashmaxxSettings) -> str:
         method_labels=METHOD_LABELS,
         all_methods=ALL_EARNING_METHODS,
         earning_methods_text=", ".join(enabled) if enabled else "none enabled; ask the owner",
+        connected_text=_connected_labels(integrations),
+        social_text=_connected_labels(integrations, SOCIAL_IDS),
     )
     return re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
 
 
-def render_rules(settings: CashmaxxSettings) -> str:
-    return _render("RULES.md", settings)
+def render_rules(settings: CashmaxxSettings, integrations: Connected | None = None) -> str:
+    return _render("RULES.md", settings, integrations)
 
 
 def render_heartbeat_block(settings: CashmaxxSettings) -> str:
@@ -251,9 +304,17 @@ def set_loop_paused(workspace: Path, paused: bool) -> bool:
 
 
 def install_workspace(
-    workspace: Path, settings: CashmaxxSettings, *, force: bool = False
+    workspace: Path,
+    settings: CashmaxxSettings,
+    *,
+    force: bool = False,
+    integrations: Connected | None = None,
 ) -> InstallReport:
-    """Write HEARTBEAT/SOUL/RULES and the enabled skills. Safe to run repeatedly."""
+    """Write HEARTBEAT/SOUL/RULES and the enabled skills. Safe to run repeatedly.
+
+    ``integrations`` maps integration ids to whether they are connected (guard ``GET
+    /integrations`` plus the agent-kind MCP servers); ``None`` means unknown.
+    """
     workspace = workspace.expanduser()
     workspace.mkdir(parents=True, exist_ok=True)
     report = InstallReport()
@@ -278,8 +339,8 @@ def install_workspace(
         _upsert_block(soul_path, SOUL_BLOCK, render_soul_block(settings), force=force,
                       header=soul_header),
     )
-    report.add("RULES.md", _write_managed_file(workspace / "RULES.md", render_rules(settings),
-                                               force=force))
+    report.add("RULES.md", _write_managed_file(workspace / "RULES.md",
+                                               render_rules(settings, integrations), force=force))
     (workspace / "cashmaxx").mkdir(exist_ok=True)
     log = workspace / "cashmaxx" / "experiments.md"
     if not log.exists():
@@ -294,6 +355,17 @@ def install_workspace(
             report.add(rel, _write_managed_file(path, _package_text("skills", src, "SKILL.md"),
                                                 force=force))
         else:
+            outcome = _remove_managed_file(path, force=force)
+            if outcome is not None:
+                report.add(rel, outcome)
+    for name, (src, gate) in INTEGRATION_SKILLS.items():
+        rel = f"skills/{name}/SKILL.md"
+        path = workspace / rel
+        wanted_now = gate(settings, integrations)
+        if wanted_now is True:
+            report.add(rel, _write_managed_file(path, _package_text("skills", src, "SKILL.md"),
+                                                force=force))
+        elif wanted_now is False:
             outcome = _remove_managed_file(path, force=force)
             if outcome is not None:
                 report.add(rel, outcome)

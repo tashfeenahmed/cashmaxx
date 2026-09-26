@@ -26,6 +26,8 @@ T = TypeVar("T")
 
 Direction = Literal["income", "cost"]
 PaymentStatus = Literal["pending", "paid", "denied", "failed"]
+OutboundChannel = Literal["email", "social"]
+OutboundStatus = Literal["pending", "sent", "failed"]
 ApprovalStatus = Literal["pending", "approved", "denied", "expired"]
 Actor = Literal["agent", "owner", "guard"]
 
@@ -82,6 +84,18 @@ CREATE TABLE IF NOT EXISTS kv (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS outbound (
+    id TEXT PRIMARY KEY,
+    ts TEXT NOT NULL,
+    channel TEXT NOT NULL CHECK (channel IN ('email', 'social')),
+    provider TEXT NOT NULL,
+    idempotency_key TEXT NOT NULL UNIQUE,
+    recipients INTEGER NOT NULL,
+    target TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'sent', 'failed')),
+    ref TEXT
+);
+CREATE INDEX IF NOT EXISTS outbound_channel_ts ON outbound(channel, ts);
 """
 
 
@@ -173,6 +187,29 @@ class Event:
     def to_json(self) -> dict[str, Any]:
         return {"id": self.id, "ts": self.ts, "actor": self.actor, "type": self.type,
                 "data": self.data}
+
+
+@dataclass(frozen=True)
+class Outbound:
+    """One outbound email or social post: counts toward the daily caps and holds idempotency."""
+
+    id: str
+    ts: str
+    channel: OutboundChannel
+    provider: str
+    idempotency_key: str
+    recipients: int
+    target: str
+    status: OutboundStatus
+    ref: str | None
+
+
+def _outbound(row: sqlite3.Row) -> Outbound:
+    return Outbound(
+        id=row["id"], ts=row["ts"], channel=row["channel"], provider=row["provider"],
+        idempotency_key=row["idempotency_key"], recipients=int(row["recipients"]),
+        target=row["target"], status=row["status"], ref=row["ref"],
+    )
 
 
 def _ledger(row: sqlite3.Row) -> LedgerEntry:
@@ -493,6 +530,71 @@ class Store:
                       data=json.loads(r["data_json"]))
                 for r in rows
             ]
+
+        return await self._run(fn)
+
+    # --- outbound (email + social) ----------------------------------------------------------------
+    async def reserve_outbound(
+        self,
+        *,
+        ts: datetime,
+        channel: OutboundChannel,
+        provider: str,
+        idempotency_key: str,
+        recipients: int,
+        target: str,
+    ) -> Outbound:
+        """Insert a ``pending`` row. Raises ``DuplicateIdempotencyKeyError`` if the key exists."""
+        oid = new_id("out")
+
+        def fn(c: sqlite3.Connection) -> Outbound:
+            try:
+                c.execute(
+                    "INSERT INTO outbound (id, ts, channel, provider, idempotency_key, recipients,"
+                    " target, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')",
+                    (oid, iso(ts), channel, provider, idempotency_key, recipients, target[:500]),
+                )
+            except sqlite3.IntegrityError as exc:
+                raise DuplicateIdempotencyKeyError(idempotency_key) from exc
+            return _outbound(c.execute("SELECT * FROM outbound WHERE id = ?", (oid,)).fetchone())
+
+        return await self._run(fn)
+
+    async def get_outbound_by_key(self, key: str) -> Outbound | None:
+        def fn(c: sqlite3.Connection) -> Outbound | None:
+            row = c.execute("SELECT * FROM outbound WHERE idempotency_key = ?", (key,)).fetchone()
+            return _outbound(row) if row else None
+
+        return await self._run(fn)
+
+    async def finish_outbound(
+        self, outbound_id: str, *, status: OutboundStatus, ref: str | None
+    ) -> None:
+        """Mark a reserved row sent or failed. A failed row releases its idempotency key."""
+
+        def fn(c: sqlite3.Connection) -> None:
+            if status == "failed":
+                c.execute(
+                    "UPDATE outbound SET status = 'failed', ref = ?,"
+                    " idempotency_key = idempotency_key || ':failed:' || id WHERE id = ?",
+                    (ref, outbound_id),
+                )
+            else:
+                c.execute("UPDATE outbound SET status = ?, ref = ? WHERE id = ?",
+                          (status, ref, outbound_id))
+
+        await self._run(fn)
+
+    async def count_outbound(self, channel: OutboundChannel, since: datetime) -> int:
+        """Recipients (email) or posts (social) since ``since`` that were sent or are in flight."""
+
+        def fn(c: sqlite3.Connection) -> int:
+            row = c.execute(
+                "SELECT COALESCE(SUM(recipients), 0) FROM outbound WHERE channel = ? AND ts >= ?"
+                " AND status IN ('pending', 'sent')",
+                (channel, iso(since)),
+            ).fetchone()
+            return int(row[0])
 
         return await self._run(fn)
 

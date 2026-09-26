@@ -1974,6 +1974,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "連携",
       "settings": "Settings"
     },
     "actions": {
@@ -2211,6 +2212,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "ステータスのみ表示中",
+      "lockedBody": "接続・テスト・切断にはオーナー PIN が必要です。",
+      "unlock": "ロックを解除して管理",
+      "categories": {
+        "money": "お金",
+        "compute": "コンピュート",
+        "approvals": "承認",
+        "email": "メール",
+        "social": "ソーシャル",
+        "hosting": "ホスティング",
+        "browser": "ブラウザ",
+        "code": "コード",
+        "search": "検索",
+        "other": "その他"
+      },
+      "status": {
+        "connected": "接続済み",
+        "notConnected": "未接続",
+        "testFailed": "テスト失敗"
+      },
+      "lastTestOk": "テスト成功",
+      "lastTestFailed": "テスト失敗",
+      "neverTested": "未テスト",
+      "docs": "ドキュメント",
+      "actions": {
+        "connect": "接続",
+        "edit": "編集",
+        "test": "テスト",
+        "disconnect": "切断"
+      },
+      "testPassed": "{{label}}: テストに成功しました。{{message}}",
+      "testFailedMessage": "{{label}}: テストに失敗しました。{{message}}",
+      "saved": "{{label}} を保存しました。テストを実行して動作を確認してください。",
+      "disconnected": "{{label}} を切断しました。",
+      "settingSaved": "保存しました。",
+      "saveSetting": "保存",
+      "perDay": "/日",
+      "capRange": "{{min}}〜{{max}} の整数を入力してください。",
+      "dialog": {
+        "connectTitle": "{{label}} を接続",
+        "editTitle": "{{label}} を編集",
+        "guardKind": "これらの認証情報はガードが保管します。エージェントからは見えません。",
+        "agentKind": "これらの設定はエージェント自身のツール設定に書き込まれます。",
+        "save": "PIN で保存",
+        "required": "必須",
+        "requiredError": "この項目は必須です。",
+        "keepSecret": "保存済み。空欄のままにすると変更されません。",
+        "keepPlaceholder": "保存済み（変更なし）",
+        "choose": "選択…"
+      },
+      "disconnect": {
+        "title": "{{label}} を切断しますか？",
+        "body": "保存された認証情報は削除され、再接続するまでエージェントはこの機能を使えなくなります。",
+        "emailBody": "保存された認証情報は削除されます。これが送信プロバイダーの場合、メールはオフになります。",
+        "confirm": "切断"
+      },
+      "email": {
+        "title": "メール送信",
+        "provider": "送信プロバイダー",
+        "providerHint": "エージェントが送信に使う接続済みの受信箱です。「なし」にするとメールはオフになります。",
+        "connectFirst": "エージェントがメールを送れるように、下で Gmail か AgentMail を接続してください。",
+        "providers": {
+          "none": "なし",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "1 日のメール上限",
+        "dailyCapHint": "UTC の 1 日あたりの宛先数（すべての送信の合計）。",
+        "warmup": "Gmail のウォームアップ",
+        "warmupHint": "新しいアカウントがスパム扱いされないよう、4 週間かけて上限を上げます。",
+        "warmupLine": "{{weeks}} 週中 {{week}} 週目（{{day}} 日目）: 今日は最大 {{cap}} 通、{{date}} から {{next}} 通/日。",
+        "warmupDone": "ウォームアップ完了: 1 日最大 {{cap}} 通。",
+        "warmupOff": "ウォームアップはオフ: 1 日最大 {{cap}} 通。",
+        "warmupNotStarted": "ウォームアップは Gmail を接続すると始まります。"
+      },
+      "social": {
+        "title": "ソーシャル投稿",
+        "dailyCap": "1 日の投稿上限",
+        "dailyCapHint": "Bluesky・X・Reddit を合わせた UTC の 1 日あたりの投稿数。"
+      },
+      "hosting": {
+        "enabled": "公開ホスティングを許可",
+        "enabledHint": "エージェントが実行するサービスを公開 URL で公開できるようにします。ガードとゲートウェイのポートは公開されません。"
+      },
+      "items": {
+        "openrouter": "エージェントのモデルを実行します。支出はコンピュート費用として計上されます。",
+        "cdp": "Base 上の USDC ウォレット。お金を動かせるのはガードだけです。",
+        "stripe": "デジタル商品の商品と支払いリンク。出金はできません。",
+        "telegram": "ガード専用ボットから、承認とアラートをスマートフォンで受け取れます。",
+        "gmail": "エージェント専用の Gmail: 受信箱を読み、1 日の上限内で送信します。",
+        "agentmail": "エージェント向けの受信箱。1 日の上限内で読み取りと送信ができます。",
+        "bluesky": "1 日のソーシャル上限内で Bluesky に投稿します。",
+        "x": "1 日のソーシャル上限内で X に投稿します。",
+        "reddit": "許可されているサブレディットに、1 日のソーシャル上限内で投稿します。",
+        "hosting": "Cloudflare トンネルで、エージェントのサービスを公開 URL にします。",
+        "browser": "専用プロファイルの本物のブラウザ: ローカルの Playwright または Browserbase。",
+        "github": "報奨金用のエージェントの GitHub アカウント: Issue、フォーク、プルリクエスト。",
+        "search": "より良いウェブ検索とスクレイピング: Brave、Exa、Firecrawl。"
+      },
+      "fields": {
+        "apiKey": "API キー",
+        "apiKeyId": "API キー ID",
+        "apiKeySecret": "API キーシークレット",
+        "walletSecret": "ウォレットシークレット",
+        "restrictedKey": "制限付きキー",
+        "botToken": "ボットトークン",
+        "ownerChatId": "あなたのチャット ID",
+        "address": "Gmail アドレス",
+        "appPassword": "アプリパスワード",
+        "inboxId": "受信箱のアドレス",
+        "handle": "ハンドル",
+        "apiSecret": "API シークレット",
+        "accessToken": "アクセストークン",
+        "accessSecret": "アクセストークンシークレット",
+        "clientId": "クライアント ID",
+        "clientSecret": "クライアントシークレット",
+        "username": "ユーザー名",
+        "password": "パスワード",
+        "provider": "プロバイダー",
+        "tunnelToken": "トンネルトークン",
+        "browserbaseApiKey": "Browserbase API キー",
+        "browserbaseProjectId": "Browserbase プロジェクト ID",
+        "token": "Fine-grained トークン"
+      },
+      "choices": {
+        "cloudflare_quick": "Cloudflare クイックトンネル",
+        "cloudflare_token": "Cloudflare トンネル（トークン）",
+        "playwright": "Playwright（ローカル）",
+        "browserbase": "Browserbase（クラウド）",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

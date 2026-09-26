@@ -1988,6 +1988,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "Integrações",
       "settings": "Settings"
     },
     "actions": {
@@ -2225,6 +2226,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "Somente status",
+      "lockedBody": "Conectar, testar e desconectar exigem o PIN do proprietário.",
+      "unlock": "Desbloquear para gerenciar",
+      "categories": {
+        "money": "Dinheiro",
+        "compute": "Computação",
+        "approvals": "Aprovações",
+        "email": "E-mail",
+        "social": "Redes sociais",
+        "hosting": "Hospedagem",
+        "browser": "Navegador",
+        "code": "Código",
+        "search": "Busca",
+        "other": "Outros"
+      },
+      "status": {
+        "connected": "Conectado",
+        "notConnected": "Não conectado",
+        "testFailed": "Teste falhou"
+      },
+      "lastTestOk": "Teste aprovado",
+      "lastTestFailed": "Teste falhou",
+      "neverTested": "Ainda não testado",
+      "docs": "Documentação",
+      "actions": {
+        "connect": "Conectar",
+        "edit": "Editar",
+        "test": "Testar",
+        "disconnect": "Desconectar"
+      },
+      "testPassed": "{{label}}: teste aprovado. {{message}}",
+      "testFailedMessage": "{{label}}: o teste falhou. {{message}}",
+      "saved": "{{label}} salvo. Faça um teste para confirmar que funciona.",
+      "disconnected": "{{label}} desconectado.",
+      "settingSaved": "Salvo.",
+      "saveSetting": "Salvar",
+      "perDay": "/dia",
+      "capRange": "Digite um número inteiro de {{min}} a {{max}}.",
+      "dialog": {
+        "connectTitle": "Conectar {{label}}",
+        "editTitle": "Editar {{label}}",
+        "guardKind": "O guardião guarda estas credenciais. O agente nunca as vê.",
+        "agentKind": "Estas configurações vão para a configuração de ferramentas do próprio agente.",
+        "save": "Salvar com PIN",
+        "required": "obrigatório",
+        "requiredError": "Este campo é obrigatório.",
+        "keepSecret": "Salvo. Deixe vazio para manter.",
+        "keepPlaceholder": "Salvo (sem alteração)",
+        "choose": "Escolher…"
+      },
+      "disconnect": {
+        "title": "Desconectar {{label}}?",
+        "body": "As credenciais salvas são apagadas e o agente perde este recurso até você conectar de novo.",
+        "emailBody": "As credenciais salvas são apagadas. Se este for o provedor de envio, o e-mail é desligado.",
+        "confirm": "Desconectar"
+      },
+      "email": {
+        "title": "Envio de e-mail",
+        "provider": "Provedor de envio",
+        "providerHint": "De qual caixa conectada o agente envia. Nenhum desliga o e-mail.",
+        "connectFirst": "Conecte o Gmail ou o AgentMail abaixo para o agente poder enviar e-mail.",
+        "providers": {
+          "none": "Nenhum",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "Limite diário de e-mails",
+        "dailyCapHint": "Destinatários por dia UTC, somando todos os envios.",
+        "warmup": "Aquecimento do Gmail",
+        "warmupHint": "Aumenta o limite ao longo de quatro semanas para uma conta nova não ser marcada como spam.",
+        "warmupLine": "Semana {{week}} de {{weeks}} (dia {{day}}): até {{cap}} e-mails hoje, {{next}}/dia a partir de {{date}}.",
+        "warmupDone": "Aquecimento concluído: até {{cap}} e-mails por dia.",
+        "warmupOff": "Aquecimento desligado: até {{cap}} e-mails por dia.",
+        "warmupNotStarted": "O aquecimento começa quando o Gmail é conectado."
+      },
+      "social": {
+        "title": "Publicação em redes sociais",
+        "dailyCap": "Limite diário de publicações",
+        "dailyCapHint": "Publicações por dia UTC somando Bluesky, X e Reddit."
+      },
+      "hosting": {
+        "enabled": "Permitir hospedagem pública",
+        "enabledHint": "Permite que o agente coloque em uma URL pública um serviço que ele executa. As portas do guardião e do gateway nunca são expostas."
+      },
+      "items": {
+        "openrouter": "Executa o modelo do agente; o gasto conta como custo de computação.",
+        "cdp": "A carteira USDC na Base. Só o guardião pode movimentar dinheiro.",
+        "stripe": "Produtos e links de pagamento para produtos digitais. Sem saques.",
+        "telegram": "Aprovações e alertas no seu celular, pelo bot próprio do guardião.",
+        "gmail": "O Gmail do próprio agente: ler a caixa e enviar dentro do limite diário.",
+        "agentmail": "Uma caixa de entrada feita para agentes. Ler e enviar dentro do limite diário.",
+        "bluesky": "Publicar no Bluesky dentro do limite social diário.",
+        "x": "Publicar no X dentro do limite social diário.",
+        "reddit": "Publicar em subreddits que permitem, dentro do limite social diário.",
+        "hosting": "Colocar um serviço do agente em uma URL pública por um túnel da Cloudflare.",
+        "browser": "Um navegador real com perfil próprio: Playwright local ou Browserbase.",
+        "github": "A conta do GitHub do agente para recompensas: issues, forks e pull requests.",
+        "search": "Busca na web e extração melhores: Brave, Exa ou Firecrawl."
+      },
+      "fields": {
+        "apiKey": "Chave de API",
+        "apiKeyId": "ID da chave de API",
+        "apiKeySecret": "Segredo da chave de API",
+        "walletSecret": "Segredo da carteira",
+        "restrictedKey": "Chave restrita",
+        "botToken": "Token do bot",
+        "ownerChatId": "Seu ID de chat",
+        "address": "Endereço do Gmail",
+        "appPassword": "Senha de app",
+        "inboxId": "Endereço da caixa",
+        "handle": "Usuário",
+        "apiSecret": "Segredo da API",
+        "accessToken": "Token de acesso",
+        "accessSecret": "Segredo do token de acesso",
+        "clientId": "ID do cliente",
+        "clientSecret": "Segredo do cliente",
+        "username": "Nome de usuário",
+        "password": "Senha",
+        "provider": "Provedor",
+        "tunnelToken": "Token do túnel",
+        "browserbaseApiKey": "Chave de API do Browserbase",
+        "browserbaseProjectId": "ID do projeto no Browserbase",
+        "token": "Token granular"
+      },
+      "choices": {
+        "cloudflare_quick": "Túnel rápido da Cloudflare",
+        "cloudflare_token": "Túnel da Cloudflare (token)",
+        "playwright": "Playwright (local)",
+        "browserbase": "Browserbase (nuvem)",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

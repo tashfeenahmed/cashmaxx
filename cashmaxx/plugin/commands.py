@@ -1,6 +1,7 @@
 """Cashmaxx slash commands. They run without the LLM.
 
-- ``/cashmaxx``: status (wallet, balance, available budget, 7-day P&L, pending approvals, frozen).
+- ``/cashmaxx``: status (wallet, balance, available budget, 7-day P&L, pending approvals, frozen,
+  and one line per connected integration).
 - ``/pause`` and ``/resume``: stop or restart the money loop by toggling the Cashmaxx block in
   ``HEARTBEAT.md`` (see ``workspace.set_loop_paused``). Other heartbeat tasks are unaffected.
 - ``/freeze [reason]``: pulls the guard's kill switch. Anyone may freeze; only the owner unfreezes.
@@ -17,6 +18,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from cashmaxx import plugin
 from cashmaxx.guard.client import GuardClient, GuardError, GuardUnavailable
+from cashmaxx.plugin import integrations as integ
 from cashmaxx.plugin import workspace as ws
 from nanobot.bus.events import OutboundMessage
 
@@ -70,14 +72,40 @@ async def status_text(client: GuardClient, workspace: Path) -> str:
     frozen = bool(health.get("frozen"))
     lines.append(f"Frozen: {'YES' if frozen else 'no'}")
     lines.append(f"Money loop: {loop_state}")
+    lines.extend(await integration_lines(client))
     lines.append("Approve payments in the guard's Telegram bot or the WebUI (owner PIN).")
     return "\n".join(lines)
+
+
+async def integration_lines(client: GuardClient) -> list[str]:
+    """One line per connected integration; never fails the status command."""
+    try:
+        items = await integ.fetch_listing(client)
+    except GuardError as exc:
+        return [f"Integrations: unavailable ({exc.code})"]
+    connected = [i for i in items if i.get("connected")]
+    if not connected:
+        return ["Integrations: none connected (connect them in the WebUI or `cashmaxx connect`)"]
+    lines = ["Integrations:"]
+    for item in connected:
+        line = f"  - {item.get('label')} ({item.get('category')}): connected"
+        if item.get("category") == "email":
+            try:
+                status = await client.email_status()
+            except GuardError:
+                status = {}
+            if status.get("connected") and status.get("address"):
+                line += (f", {status.get('address')}, {status.get('sent_today', 0)}/"
+                         f"{status.get('cap_today', '?')} sent today")
+        lines.append(line)
+    return lines
 
 
 async def cmd_cashmaxx(ctx: CommandContext) -> OutboundMessage:
     cfg = plugin.resolve_agent_config()
     if cfg is None:
         return _reply(ctx, NOT_CONFIGURED)
+    plugin.kick_workspace_refresh()
     try:
         async with plugin.guard_client(cfg) as client:
             return _reply(ctx, await status_text(client, _workspace(ctx)))

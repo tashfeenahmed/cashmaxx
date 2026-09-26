@@ -14,7 +14,9 @@ This module stays import-light: ``nanobot.webui.ws_http`` imports ``webui_routes
 
 from __future__ import annotations
 
+import asyncio
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -35,6 +37,7 @@ __all__ = [
     "configure",
     "guard_client",
     "install",
+    "kick_workspace_refresh",
     "reset",
     "resolve_agent_config",
     "state",
@@ -48,6 +51,11 @@ class PluginState:
     # Test seam: an ``httpx.MockTransport`` used for every GuardClient the plugin builds.
     transport: httpx.AsyncBaseTransport | None = None
     installed: bool = False
+    # nanobot's ``MCPProvider.reload`` for the running agent (found in ``install``), used after
+    # agent-kind integration changes so MCP servers reconnect without a gateway restart.
+    mcp_reload: Callable[[], Awaitable[dict[str, Any]]] | None = None
+    # Re-render RULES.md and the integration skills from the guard at the next chance.
+    refresh_pending: bool = False
 
 
 state = PluginState()
@@ -75,6 +83,8 @@ def reset() -> None:
     state.workspace = fresh.workspace
     state.transport = fresh.transport
     state.installed = fresh.installed
+    state.mcp_reload = fresh.mcp_reload
+    state.refresh_pending = fresh.refresh_pending
     _file_cache.clear()
 
 
@@ -134,7 +144,54 @@ def guard_client(
     )
 
 
-def install(agent_loop: AgentLoop, cron_service: CronService | None, config: Config) -> None:
+def _find_mcp_reload(agent_loop: Any) -> Callable[[], Awaitable[dict[str, Any]]] | None:
+    """The gateway's ``MCPProvider.reload``, reached through its MCP readiness hook.
+
+    The gateway hands the provider to the agent only as a hook, so we look for it there instead
+    of adding another upstream touch point. ``None`` when not found (changes then need a restart).
+    """
+    from nanobot.agent.tools.mcp import MCPProvider
+
+    hooks: object = getattr(agent_loop, "_extra_hooks", None)
+    if not isinstance(hooks, list):
+        return None
+    for hook in cast(list[object], hooks):
+        provider: object = getattr(hook, "_provider", None)
+        if isinstance(provider, MCPProvider):
+            return provider.reload
+    return None
+
+
+def kick_workspace_refresh() -> None:
+    """Run a pending workspace refresh in the background, if one is due and a loop is running.
+
+    ``install`` runs before the gateway's event loop starts, so it only marks the refresh as
+    pending; the first tool call, command or WebUI request then starts it.
+    """
+    if not state.refresh_pending:
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    state.refresh_pending = False
+    from cashmaxx.plugin.integrations import refresh_workspace
+
+    task = loop.create_task(refresh_workspace())
+    _background.add(task)
+    task.add_done_callback(_background.discard)
+
+
+_background: set[asyncio.Task[bool]] = set()
+
+
+def install(
+    agent_loop: AgentLoop,
+    cron_service: CronService | None,
+    config: Config,
+    *,
+    mcp_reload: Callable[[], Awaitable[dict[str, Any]]] | None = None,
+) -> None:
     """Gateway hook: pin the config, register slash commands and enable the WebUI proxy routes.
 
     The money loop itself runs on nanobot's heartbeat (``<workspace>/HEARTBEAT.md``), so no extra
@@ -148,7 +205,10 @@ def install(agent_loop: AgentLoop, cron_service: CronService | None, config: Con
 
     configure(agent_config, workspace=config.workspace_path)
     register_commands(agent_loop.commands)
+    state.mcp_reload = mcp_reload or _find_mcp_reload(agent_loop)
     state.installed = True
+    state.refresh_pending = True
+    kick_workspace_refresh()
     if not agent_config.agent_token:
         logger.warning("cashmaxx: no agent token configured; the guard will reject every call")
     if not config.gateway.heartbeat.enabled:

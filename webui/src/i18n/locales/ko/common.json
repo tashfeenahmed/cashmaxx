@@ -1974,6 +1974,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "연동",
       "settings": "Settings"
     },
     "actions": {
@@ -2211,6 +2212,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "상태만 표시 중",
+      "lockedBody": "연결, 테스트, 연결 해제에는 소유자 PIN이 필요합니다.",
+      "unlock": "잠금 해제하고 관리",
+      "categories": {
+        "money": "자금",
+        "compute": "컴퓨팅",
+        "approvals": "승인",
+        "email": "이메일",
+        "social": "소셜",
+        "hosting": "호스팅",
+        "browser": "브라우저",
+        "code": "코드",
+        "search": "검색",
+        "other": "기타"
+      },
+      "status": {
+        "connected": "연결됨",
+        "notConnected": "연결 안 됨",
+        "testFailed": "테스트 실패"
+      },
+      "lastTestOk": "테스트 통과",
+      "lastTestFailed": "테스트 실패",
+      "neverTested": "아직 테스트 안 함",
+      "docs": "문서",
+      "actions": {
+        "connect": "연결",
+        "edit": "편집",
+        "test": "테스트",
+        "disconnect": "연결 해제"
+      },
+      "testPassed": "{{label}}: 테스트를 통과했습니다. {{message}}",
+      "testFailedMessage": "{{label}}: 테스트에 실패했습니다. {{message}}",
+      "saved": "{{label}}을(를) 저장했습니다. 테스트를 실행해 작동하는지 확인하세요.",
+      "disconnected": "{{label}} 연결을 해제했습니다.",
+      "settingSaved": "저장했습니다.",
+      "saveSetting": "저장",
+      "perDay": "/일",
+      "capRange": "{{min}}에서 {{max}} 사이의 정수를 입력하세요.",
+      "dialog": {
+        "connectTitle": "{{label}} 연결",
+        "editTitle": "{{label}} 편집",
+        "guardKind": "이 자격 증명은 가드가 보관합니다. 에이전트는 절대 볼 수 없습니다.",
+        "agentKind": "이 설정은 에이전트 자체의 도구 구성에 저장됩니다.",
+        "save": "PIN으로 저장",
+        "required": "필수",
+        "requiredError": "필수 항목입니다.",
+        "keepSecret": "저장됨. 비워 두면 그대로 유지됩니다.",
+        "keepPlaceholder": "저장됨(변경 없음)",
+        "choose": "선택…"
+      },
+      "disconnect": {
+        "title": "{{label}} 연결을 해제할까요?",
+        "body": "저장된 자격 증명이 삭제되며, 다시 연결할 때까지 에이전트는 이 기능을 쓸 수 없습니다.",
+        "emailBody": "저장된 자격 증명이 삭제됩니다. 발송 제공자라면 이메일이 꺼집니다.",
+        "confirm": "연결 해제"
+      },
+      "email": {
+        "title": "이메일 발송",
+        "provider": "발송 제공자",
+        "providerHint": "에이전트가 발송에 사용할 연결된 받은편지함입니다. 없음을 선택하면 이메일이 꺼집니다.",
+        "connectFirst": "에이전트가 이메일을 보낼 수 있도록 아래에서 Gmail 또는 AgentMail을 연결하세요.",
+        "providers": {
+          "none": "없음",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "일일 이메일 한도",
+        "dailyCapHint": "모든 발송을 합친 UTC 하루당 수신자 수.",
+        "warmup": "Gmail 워밍업",
+        "warmupHint": "새 계정이 스팸으로 표시되지 않도록 4주에 걸쳐 한도를 올립니다.",
+        "warmupLine": "{{weeks}}주 중 {{week}}주차({{day}}일째): 오늘 최대 {{cap}}통, {{date}}부터 하루 {{next}}통.",
+        "warmupDone": "워밍업 완료: 하루 최대 {{cap}}통.",
+        "warmupOff": "워밍업 꺼짐: 하루 최대 {{cap}}통.",
+        "warmupNotStarted": "워밍업은 Gmail을 연결하면 시작됩니다."
+      },
+      "social": {
+        "title": "소셜 게시",
+        "dailyCap": "일일 게시 한도",
+        "dailyCapHint": "Bluesky, X, Reddit을 합친 UTC 하루당 게시물 수."
+      },
+      "hosting": {
+        "enabled": "공개 호스팅 허용",
+        "enabledHint": "에이전트가 실행하는 서비스를 공개 URL로 열 수 있게 합니다. 가드와 게이트웨이 포트는 절대 공개되지 않습니다."
+      },
+      "items": {
+        "openrouter": "에이전트의 모델을 실행합니다. 지출은 컴퓨팅 비용으로 집계됩니다.",
+        "cdp": "Base의 USDC 지갑. 돈은 가드만 옮길 수 있습니다.",
+        "stripe": "디지털 상품용 상품과 결제 링크. 출금은 불가합니다.",
+        "telegram": "가드 전용 봇으로 휴대폰에서 승인과 알림을 받습니다.",
+        "gmail": "에이전트 전용 Gmail: 받은편지함을 읽고 일일 한도 안에서 발송합니다.",
+        "agentmail": "에이전트용 받은편지함. 일일 한도 안에서 읽고 보냅니다.",
+        "bluesky": "일일 소셜 한도 안에서 Bluesky에 게시합니다.",
+        "x": "일일 소셜 한도 안에서 X에 게시합니다.",
+        "reddit": "허용하는 서브레딧에 일일 소셜 한도 안에서 게시합니다.",
+        "hosting": "Cloudflare 터널로 에이전트의 서비스를 공개 URL에 올립니다.",
+        "browser": "전용 프로필을 쓰는 실제 브라우저: 로컬 Playwright 또는 Browserbase.",
+        "github": "바운티용 에이전트 GitHub 계정: 이슈, 포크, 풀 리퀘스트.",
+        "search": "더 나은 웹 검색과 스크래핑: Brave, Exa 또는 Firecrawl."
+      },
+      "fields": {
+        "apiKey": "API 키",
+        "apiKeyId": "API 키 ID",
+        "apiKeySecret": "API 키 시크릿",
+        "walletSecret": "지갑 시크릿",
+        "restrictedKey": "제한된 키",
+        "botToken": "봇 토큰",
+        "ownerChatId": "내 채팅 ID",
+        "address": "Gmail 주소",
+        "appPassword": "앱 비밀번호",
+        "inboxId": "받은편지함 주소",
+        "handle": "핸들",
+        "apiSecret": "API 시크릿",
+        "accessToken": "액세스 토큰",
+        "accessSecret": "액세스 토큰 시크릿",
+        "clientId": "클라이언트 ID",
+        "clientSecret": "클라이언트 시크릿",
+        "username": "사용자 이름",
+        "password": "비밀번호",
+        "provider": "제공자",
+        "tunnelToken": "터널 토큰",
+        "browserbaseApiKey": "Browserbase API 키",
+        "browserbaseProjectId": "Browserbase 프로젝트 ID",
+        "token": "세분화된 토큰"
+      },
+      "choices": {
+        "cloudflare_quick": "Cloudflare 빠른 터널",
+        "cloudflare_token": "Cloudflare 터널(토큰)",
+        "playwright": "Playwright(로컬)",
+        "browserbase": "Browserbase(클라우드)",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

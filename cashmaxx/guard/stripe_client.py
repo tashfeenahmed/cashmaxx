@@ -77,6 +77,16 @@ class StripeClient:
 
         return await asyncio.to_thread(run)
 
+    async def ping(self) -> str:
+        """Live key check: list one product (needs Products read access)."""
+
+        def run() -> str:
+            page = self._client.v1.products.list(params={"limit": 1})
+            count = len(list(_get(page, "data", []) or []))
+            return f"Stripe key ok ({count} product{'s' if count != 1 else ''} visible)"
+
+        return await asyncio.to_thread(run)
+
     async def completed_sessions_since(
         self, cursor: int | None
     ) -> tuple[list[StripeSale], int | None]:

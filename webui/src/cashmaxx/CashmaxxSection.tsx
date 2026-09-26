@@ -7,11 +7,12 @@ import { useClient } from "@/providers/ClientProvider";
 
 import type { CashmaxxConnection } from "./api";
 import { CashmaxxApprovals } from "./components/CashmaxxApprovals";
+import { CashmaxxIntegrations } from "./components/CashmaxxIntegrations";
 import { CashmaxxOverview } from "./components/CashmaxxOverview";
 import { CashmaxxSettingsForm } from "./components/CashmaxxSettingsForm";
 import { OwnerSessionProvider } from "./owner-session";
 
-export type CashmaxxPage = "overview" | "approvals" | "settings";
+export type CashmaxxPage = "overview" | "approvals" | "integrations" | "settings";
 
 /** Settings-page entry point: reads the WebUI token and socket from the app's ClientProvider. */
 export function CashmaxxSettingsSection() {
@@ -20,7 +21,7 @@ export function CashmaxxSettingsSection() {
   return <CashmaxxSection connection={connection} />;
 }
 
-/** The Cashmaxx section: wallet & P&L, approvals, and the guard's settings. */
+/** The Cashmaxx section: wallet & P&L, approvals, integrations, and the guard's settings. */
 export function CashmaxxSection({
   connection,
   initialPage = "overview",
@@ -30,7 +31,7 @@ export function CashmaxxSection({
 }) {
   const { t } = useTranslation();
   const [page, setPage] = useState<CashmaxxPage>(initialPage);
-  const pages: CashmaxxPage[] = ["overview", "approvals", "settings"];
+  const pages: CashmaxxPage[] = ["overview", "approvals", "integrations", "settings"];
 
   return (
     <OwnerSessionProvider connection={connection}>
@@ -51,6 +52,7 @@ export function CashmaxxSection({
         <div role="tabpanel" aria-label={t(`cashmaxx.pages.${page}`)} key={page}>
           {page === "overview" ? <CashmaxxOverview connection={connection} /> : null}
           {page === "approvals" ? <CashmaxxApprovals connection={connection} /> : null}
+          {page === "integrations" ? <CashmaxxIntegrations connection={connection} /> : null}
           {page === "settings" ? <CashmaxxSettingsForm connection={connection} /> : null}
         </div>
       </section>

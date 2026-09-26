@@ -8,6 +8,7 @@ fail closed.
 from __future__ import annotations
 
 from typing import Any, Literal, cast
+from urllib.parse import quote
 
 import httpx
 
@@ -181,7 +182,7 @@ class GuardClient:
         )
 
     async def email_message(self, message_id: str) -> JSON:
-        return await self._request("GET", f"/email/messages/{message_id}")
+        return await self._request("GET", f"/email/messages/{quote(message_id, safe='')}")
 
     async def social_post(
         self, *, platform: str, text: str, idempotency_key: str,
@@ -200,7 +201,7 @@ class GuardClient:
         return await self._request("POST", "/hosting/expose", json={"port": port, "name": name})
 
     async def hosting_stop(self, name: str) -> JSON:
-        return await self._request("DELETE", f"/hosting/{name}")
+        return await self._request("DELETE", f"/hosting/{quote(name, safe='')}")
 
     # --- owner actions (need an owner session) ------------------------------------------------
     async def owner_session(self, pin: str) -> JSON:
@@ -228,10 +229,10 @@ class GuardClient:
 
     async def update_integration(self, integration_id: str, fields: dict[str, str]) -> JSON:
         """Merge fields. An empty string for a secret keeps the stored value."""
-        return await self._request("PUT", f"/integrations/{integration_id}", json={"fields": fields})
+        return await self._request("PUT", f"/integrations/{quote(integration_id, safe='')}", json={"fields": fields})
 
     async def test_integration(self, integration_id: str) -> JSON:
-        return await self._request("POST", f"/integrations/{integration_id}/test")
+        return await self._request("POST", f"/integrations/{quote(integration_id, safe='')}/test")
 
     async def remove_integration(self, integration_id: str) -> JSON:
-        return await self._request("DELETE", f"/integrations/{integration_id}")
+        return await self._request("DELETE", f"/integrations/{quote(integration_id, safe='')}")

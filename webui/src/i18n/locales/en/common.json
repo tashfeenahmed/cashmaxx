@@ -2174,6 +2174,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "Integrations",
       "settings": "Settings"
     },
     "actions": {
@@ -2411,6 +2412,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "Statuses only",
+      "lockedBody": "Connecting, testing and disconnecting need the owner PIN.",
+      "unlock": "Unlock to manage",
+      "categories": {
+        "money": "Money",
+        "compute": "Compute",
+        "approvals": "Approvals",
+        "email": "Email",
+        "social": "Social",
+        "hosting": "Hosting",
+        "browser": "Browser",
+        "code": "Code",
+        "search": "Search",
+        "other": "Other"
+      },
+      "status": {
+        "connected": "Connected",
+        "notConnected": "Not connected",
+        "testFailed": "Test failed"
+      },
+      "lastTestOk": "Test passed",
+      "lastTestFailed": "Test failed",
+      "neverTested": "Not tested yet",
+      "docs": "Docs",
+      "actions": {
+        "connect": "Connect",
+        "edit": "Edit",
+        "test": "Test",
+        "disconnect": "Disconnect"
+      },
+      "testPassed": "{{label}}: test passed. {{message}}",
+      "testFailedMessage": "{{label}}: test failed. {{message}}",
+      "saved": "{{label}} saved. Run a test to check that it works.",
+      "disconnected": "{{label}} disconnected.",
+      "settingSaved": "Saved.",
+      "saveSetting": "Save",
+      "perDay": "/day",
+      "capRange": "Enter a whole number from {{min}} to {{max}}.",
+      "dialog": {
+        "connectTitle": "Connect {{label}}",
+        "editTitle": "Edit {{label}}",
+        "guardKind": "The guard keeps these credentials. The agent never sees them.",
+        "agentKind": "These settings go into the agent's own tool config.",
+        "save": "Save with PIN",
+        "required": "required",
+        "requiredError": "This field is required.",
+        "keepSecret": "Saved. Leave empty to keep it.",
+        "keepPlaceholder": "Saved (unchanged)",
+        "choose": "Choose…"
+      },
+      "disconnect": {
+        "title": "Disconnect {{label}}?",
+        "body": "The stored credentials are deleted and the agent loses this capability until you connect it again.",
+        "emailBody": "The stored credentials are deleted. If this is the sending provider, email turns off.",
+        "confirm": "Disconnect"
+      },
+      "email": {
+        "title": "Email sending",
+        "provider": "Sending provider",
+        "providerHint": "Which connected inbox the agent sends from. None turns email off.",
+        "connectFirst": "Connect Gmail or AgentMail below to let the agent send email.",
+        "providers": {
+          "none": "None",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "Daily email cap",
+        "dailyCapHint": "Recipients per UTC day, across all sends.",
+        "warmup": "Gmail warm-up",
+        "warmupHint": "Raise the cap over four weeks so a new account is not flagged as spam.",
+        "warmupLine": "Week {{week}} of {{weeks}} (day {{day}}): up to {{cap}} emails today, {{next}}/day from {{date}}.",
+        "warmupDone": "Warm-up complete: up to {{cap}} emails a day.",
+        "warmupOff": "Warm-up off: up to {{cap}} emails a day.",
+        "warmupNotStarted": "The warm-up starts when Gmail is connected."
+      },
+      "social": {
+        "title": "Social posting",
+        "dailyCap": "Daily post cap",
+        "dailyCapHint": "Posts per UTC day across Bluesky, X and Reddit together."
+      },
+      "hosting": {
+        "enabled": "Allow public hosting",
+        "enabledHint": "Lets the agent put a service it runs on a public URL. The guard and gateway ports are never exposed."
+      },
+      "items": {
+        "openrouter": "Runs the agent's model; its spend counts as compute cost.",
+        "cdp": "The USDC wallet on Base. Only the guard can move money.",
+        "stripe": "Products and payment links for digital products. No payouts.",
+        "telegram": "Approvals and alerts on your phone, from the guard's own bot.",
+        "gmail": "The agent's own Gmail: read the inbox and send within the daily cap.",
+        "agentmail": "An inbox made for agents. Read and send within the daily cap.",
+        "bluesky": "Post to Bluesky within the daily social cap.",
+        "x": "Post to X within the daily social cap.",
+        "reddit": "Post to subreddits that allow it, within the daily social cap.",
+        "hosting": "Put a service the agent runs on a public URL through a Cloudflare tunnel.",
+        "browser": "A real browser with its own profile: local Playwright or Browserbase.",
+        "github": "The agent's GitHub account for bounties: issues, forks and pull requests.",
+        "search": "Better web search and scraping: Brave, Exa or Firecrawl."
+      },
+      "fields": {
+        "apiKey": "API key",
+        "apiKeyId": "API key ID",
+        "apiKeySecret": "API key secret",
+        "walletSecret": "Wallet secret",
+        "restrictedKey": "Restricted key",
+        "botToken": "Bot token",
+        "ownerChatId": "Your chat ID",
+        "address": "Gmail address",
+        "appPassword": "App password",
+        "inboxId": "Inbox address",
+        "handle": "Handle",
+        "apiSecret": "API secret",
+        "accessToken": "Access token",
+        "accessSecret": "Access token secret",
+        "clientId": "Client ID",
+        "clientSecret": "Client secret",
+        "username": "Username",
+        "password": "Password",
+        "provider": "Provider",
+        "tunnelToken": "Tunnel token",
+        "browserbaseApiKey": "Browserbase API key",
+        "browserbaseProjectId": "Browserbase project ID",
+        "token": "Fine-grained token"
+      },
+      "choices": {
+        "cloudflare_quick": "Cloudflare quick tunnel",
+        "cloudflare_token": "Cloudflare tunnel (token)",
+        "playwright": "Playwright (local)",
+        "browserbase": "Browserbase (cloud)",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

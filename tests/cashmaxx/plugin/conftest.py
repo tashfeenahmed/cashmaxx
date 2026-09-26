@@ -42,6 +42,18 @@ def workspace(tmp_path: Path) -> Path:
 
 
 @pytest.fixture(autouse=True)
+def nanobot_config_path(tmp_path: Path) -> Iterator[Path]:
+    """Point nanobot's config loader at a temp file so no test reads or writes the real one."""
+    from nanobot.config import loader
+
+    previous = loader._current_config_path  # pyright: ignore[reportPrivateUsage]
+    path = tmp_path / "nanobot-config.json"
+    loader.set_config_path(path)
+    yield path
+    loader._current_config_path = previous  # pyright: ignore[reportPrivateUsage]
+
+
+@pytest.fixture(autouse=True)
 def pinned_plugin(fake_guard: FakeGuard, workspace: Path) -> Iterator[None]:
     plugin.reset()
     plugin.configure(

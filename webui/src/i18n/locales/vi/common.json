@@ -1974,6 +1974,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "Tích hợp",
       "settings": "Settings"
     },
     "actions": {
@@ -2211,6 +2212,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "Chỉ trạng thái",
+      "lockedBody": "Kết nối, kiểm tra và ngắt kết nối cần mã PIN của chủ sở hữu.",
+      "unlock": "Mở khóa để quản lý",
+      "categories": {
+        "money": "Tiền",
+        "compute": "Điện toán",
+        "approvals": "Phê duyệt",
+        "email": "Email",
+        "social": "Mạng xã hội",
+        "hosting": "Lưu trữ",
+        "browser": "Trình duyệt",
+        "code": "Mã nguồn",
+        "search": "Tìm kiếm",
+        "other": "Khác"
+      },
+      "status": {
+        "connected": "Đã kết nối",
+        "notConnected": "Chưa kết nối",
+        "testFailed": "Kiểm tra thất bại"
+      },
+      "lastTestOk": "Kiểm tra đạt",
+      "lastTestFailed": "Kiểm tra thất bại",
+      "neverTested": "Chưa kiểm tra",
+      "docs": "Tài liệu",
+      "actions": {
+        "connect": "Kết nối",
+        "edit": "Sửa",
+        "test": "Kiểm tra",
+        "disconnect": "Ngắt kết nối"
+      },
+      "testPassed": "{{label}}: kiểm tra đạt. {{message}}",
+      "testFailedMessage": "{{label}}: kiểm tra thất bại. {{message}}",
+      "saved": "Đã lưu {{label}}. Hãy chạy kiểm tra để chắc chắn nó hoạt động.",
+      "disconnected": "Đã ngắt kết nối {{label}}.",
+      "settingSaved": "Đã lưu.",
+      "saveSetting": "Lưu",
+      "perDay": "/ngày",
+      "capRange": "Nhập số nguyên từ {{min}} đến {{max}}.",
+      "dialog": {
+        "connectTitle": "Kết nối {{label}}",
+        "editTitle": "Sửa {{label}}",
+        "guardKind": "Guard giữ các thông tin xác thực này. Agent không bao giờ thấy chúng.",
+        "agentKind": "Các cài đặt này được ghi vào cấu hình công cụ của chính agent.",
+        "save": "Lưu bằng PIN",
+        "required": "bắt buộc",
+        "requiredError": "Trường này là bắt buộc.",
+        "keepSecret": "Đã lưu. Để trống để giữ nguyên.",
+        "keepPlaceholder": "Đã lưu (không đổi)",
+        "choose": "Chọn…"
+      },
+      "disconnect": {
+        "title": "Ngắt kết nối {{label}}?",
+        "body": "Thông tin xác thực đã lưu sẽ bị xóa và agent mất khả năng này cho đến khi bạn kết nối lại.",
+        "emailBody": "Thông tin xác thực đã lưu sẽ bị xóa. Nếu đây là nhà cung cấp gửi thư, email sẽ bị tắt.",
+        "confirm": "Ngắt kết nối"
+      },
+      "email": {
+        "title": "Gửi email",
+        "provider": "Nhà cung cấp gửi thư",
+        "providerHint": "Hộp thư đã kết nối mà agent dùng để gửi. Không có sẽ tắt email.",
+        "connectFirst": "Kết nối Gmail hoặc AgentMail bên dưới để agent có thể gửi email.",
+        "providers": {
+          "none": "Không có",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "Giới hạn email mỗi ngày",
+        "dailyCapHint": "Số người nhận mỗi ngày UTC, tính trên mọi lần gửi.",
+        "warmup": "Làm nóng Gmail",
+        "warmupHint": "Tăng dần giới hạn trong bốn tuần để tài khoản mới không bị đánh dấu là spam.",
+        "warmupLine": "Tuần {{week}}/{{weeks}} (ngày {{day}}): tối đa {{cap}} email hôm nay, {{next}}/ngày từ {{date}}.",
+        "warmupDone": "Đã làm nóng xong: tối đa {{cap}} email mỗi ngày.",
+        "warmupOff": "Tắt làm nóng: tối đa {{cap}} email mỗi ngày.",
+        "warmupNotStarted": "Quá trình làm nóng bắt đầu khi Gmail được kết nối."
+      },
+      "social": {
+        "title": "Đăng bài mạng xã hội",
+        "dailyCap": "Giới hạn bài đăng mỗi ngày",
+        "dailyCapHint": "Số bài mỗi ngày UTC, tính chung cho Bluesky, X và Reddit."
+      },
+      "hosting": {
+        "enabled": "Cho phép lưu trữ công khai",
+        "enabledHint": "Cho phép agent đưa một dịch vụ nó chạy lên URL công khai. Cổng của guard và gateway không bao giờ bị lộ."
+      },
+      "items": {
+        "openrouter": "Chạy mô hình của agent; chi phí được tính là chi phí điện toán.",
+        "cdp": "Ví USDC trên Base. Chỉ guard mới có thể chuyển tiền.",
+        "stripe": "Sản phẩm và liên kết thanh toán cho sản phẩm số. Không rút tiền.",
+        "telegram": "Phê duyệt và cảnh báo trên điện thoại, từ bot riêng của guard.",
+        "gmail": "Gmail riêng của agent: đọc hộp thư và gửi trong giới hạn mỗi ngày.",
+        "agentmail": "Hộp thư dành cho agent. Đọc và gửi trong giới hạn mỗi ngày.",
+        "bluesky": "Đăng lên Bluesky trong giới hạn mạng xã hội mỗi ngày.",
+        "x": "Đăng lên X trong giới hạn mạng xã hội mỗi ngày.",
+        "reddit": "Đăng lên các subreddit cho phép, trong giới hạn mạng xã hội mỗi ngày.",
+        "hosting": "Đưa dịch vụ của agent lên URL công khai qua đường hầm Cloudflare.",
+        "browser": "Trình duyệt thật với hồ sơ riêng: Playwright cục bộ hoặc Browserbase.",
+        "github": "Tài khoản GitHub của agent cho tiền thưởng: issue, fork và pull request.",
+        "search": "Tìm kiếm web và thu thập dữ liệu tốt hơn: Brave, Exa hoặc Firecrawl."
+      },
+      "fields": {
+        "apiKey": "Khóa API",
+        "apiKeyId": "ID khóa API",
+        "apiKeySecret": "Bí mật khóa API",
+        "walletSecret": "Bí mật ví",
+        "restrictedKey": "Khóa hạn chế",
+        "botToken": "Token bot",
+        "ownerChatId": "ID chat của bạn",
+        "address": "Địa chỉ Gmail",
+        "appPassword": "Mật khẩu ứng dụng",
+        "inboxId": "Địa chỉ hộp thư",
+        "handle": "Tên người dùng",
+        "apiSecret": "Bí mật API",
+        "accessToken": "Token truy cập",
+        "accessSecret": "Bí mật token truy cập",
+        "clientId": "ID ứng dụng khách",
+        "clientSecret": "Bí mật ứng dụng khách",
+        "username": "Tên đăng nhập",
+        "password": "Mật khẩu",
+        "provider": "Nhà cung cấp",
+        "tunnelToken": "Token đường hầm",
+        "browserbaseApiKey": "Khóa API Browserbase",
+        "browserbaseProjectId": "ID dự án Browserbase",
+        "token": "Token chi tiết"
+      },
+      "choices": {
+        "cloudflare_quick": "Đường hầm nhanh Cloudflare",
+        "cloudflare_token": "Đường hầm Cloudflare (token)",
+        "playwright": "Playwright (cục bộ)",
+        "browserbase": "Browserbase (đám mây)",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

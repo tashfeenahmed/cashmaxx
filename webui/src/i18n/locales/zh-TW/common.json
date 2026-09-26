@@ -1974,6 +1974,7 @@
     "pages": {
       "overview": "Overview",
       "approvals": "Approvals",
+      "integrations": "整合",
       "settings": "Settings"
     },
     "actions": {
@@ -2211,6 +2212,141 @@
         "placeholder": "0x… or api.example.com",
         "remove": "Remove {{entry}}",
         "duplicate": "That entry is already on the list."
+      }
+    },
+    "integrations": {
+      "lockedTitle": "僅顯示狀態",
+      "lockedBody": "連接、測試和中斷連線都需要擁有者 PIN。",
+      "unlock": "解鎖以管理",
+      "categories": {
+        "money": "資金",
+        "compute": "運算",
+        "approvals": "核准",
+        "email": "電子郵件",
+        "social": "社群",
+        "hosting": "託管",
+        "browser": "瀏覽器",
+        "code": "程式碼",
+        "search": "搜尋",
+        "other": "其他"
+      },
+      "status": {
+        "connected": "已連接",
+        "notConnected": "未連接",
+        "testFailed": "測試失敗"
+      },
+      "lastTestOk": "測試通過",
+      "lastTestFailed": "測試失敗",
+      "neverTested": "尚未測試",
+      "docs": "文件",
+      "actions": {
+        "connect": "連接",
+        "edit": "編輯",
+        "test": "測試",
+        "disconnect": "中斷連線"
+      },
+      "testPassed": "{{label}}：測試通過。{{message}}",
+      "testFailedMessage": "{{label}}：測試失敗。{{message}}",
+      "saved": "已儲存 {{label}}。請執行測試確認可以運作。",
+      "disconnected": "已中斷 {{label}}。",
+      "settingSaved": "已儲存。",
+      "saveSetting": "儲存",
+      "perDay": "/天",
+      "capRange": "請輸入 {{min}} 到 {{max}} 之間的整數。",
+      "dialog": {
+        "connectTitle": "連接 {{label}}",
+        "editTitle": "編輯 {{label}}",
+        "guardKind": "這些憑證由守護程序保管，代理永遠看不到。",
+        "agentKind": "這些設定會寫入代理自己的工具設定。",
+        "save": "用 PIN 儲存",
+        "required": "必填",
+        "requiredError": "此欄位為必填。",
+        "keepSecret": "已儲存。留空即保持不變。",
+        "keepPlaceholder": "已儲存（未變更）",
+        "choose": "請選擇…"
+      },
+      "disconnect": {
+        "title": "中斷 {{label}}？",
+        "body": "已儲存的憑證會被刪除，在你重新連接之前，代理將失去這項能力。",
+        "emailBody": "已儲存的憑證會被刪除。如果它是寄件提供者，電子郵件功能會關閉。",
+        "confirm": "中斷連線"
+      },
+      "email": {
+        "title": "電子郵件寄送",
+        "provider": "寄件提供者",
+        "providerHint": "代理用來寄信的已連接信箱。選擇「無」會關閉電子郵件。",
+        "connectFirst": "在下方連接 Gmail 或 AgentMail，代理才能寄送電子郵件。",
+        "providers": {
+          "none": "無",
+          "gmail": "Gmail",
+          "agentmail": "AgentMail"
+        },
+        "dailyCap": "每日郵件上限",
+        "dailyCapHint": "每個 UTC 日的收件人數，合計所有寄送。",
+        "warmup": "Gmail 暖機",
+        "warmupHint": "在四週內逐步提高上限，避免新帳號被標記為垃圾郵件。",
+        "warmupLine": "第 {{week}}/{{weeks}} 週（第 {{day}} 天）：今天最多 {{cap}} 封，自 {{date}} 起每天 {{next}} 封。",
+        "warmupDone": "暖機完成：每天最多 {{cap}} 封。",
+        "warmupOff": "暖機已關閉：每天最多 {{cap}} 封。",
+        "warmupNotStarted": "連接 Gmail 後開始暖機。"
+      },
+      "social": {
+        "title": "社群發文",
+        "dailyCap": "每日發文上限",
+        "dailyCapHint": "Bluesky、X 和 Reddit 合計的每個 UTC 日發文數。"
+      },
+      "hosting": {
+        "enabled": "允許公開託管",
+        "enabledHint": "允許代理把它執行的服務放到公開網址上。守護程序和閘道的連接埠永遠不會公開。"
+      },
+      "items": {
+        "openrouter": "執行代理的模型；其花費計為運算成本。",
+        "cdp": "Base 上的 USDC 錢包。只有守護程序能移動資金。",
+        "stripe": "數位產品的商品和付款連結。無法提領。",
+        "telegram": "透過守護程序自己的機器人，在手機上核准並接收提醒。",
+        "gmail": "代理自己的 Gmail：讀取收件匣，並在每日上限內寄信。",
+        "agentmail": "專為代理打造的信箱。在每日上限內收發郵件。",
+        "bluesky": "在每日社群上限內發文到 Bluesky。",
+        "x": "在每日社群上限內發文到 X。",
+        "reddit": "在每日社群上限內發文到允許的子版。",
+        "hosting": "透過 Cloudflare 通道把代理的服務放到公開網址上。",
+        "browser": "使用獨立設定檔的真實瀏覽器：本機 Playwright 或 Browserbase。",
+        "github": "代理用於賞金任務的 GitHub 帳號：Issue、Fork 和 Pull Request。",
+        "search": "更好的網頁搜尋和擷取：Brave、Exa 或 Firecrawl。"
+      },
+      "fields": {
+        "apiKey": "API 金鑰",
+        "apiKeyId": "API 金鑰 ID",
+        "apiKeySecret": "API 金鑰密鑰",
+        "walletSecret": "錢包密鑰",
+        "restrictedKey": "受限金鑰",
+        "botToken": "機器人權杖",
+        "ownerChatId": "你的聊天 ID",
+        "address": "Gmail 地址",
+        "appPassword": "應用程式密碼",
+        "inboxId": "信箱地址",
+        "handle": "帳號名稱",
+        "apiSecret": "API 密鑰",
+        "accessToken": "存取權杖",
+        "accessSecret": "存取權杖密鑰",
+        "clientId": "用戶端 ID",
+        "clientSecret": "用戶端密鑰",
+        "username": "使用者名稱",
+        "password": "密碼",
+        "provider": "提供者",
+        "tunnelToken": "通道權杖",
+        "browserbaseApiKey": "Browserbase API 金鑰",
+        "browserbaseProjectId": "Browserbase 專案 ID",
+        "token": "細部權限權杖"
+      },
+      "choices": {
+        "cloudflare_quick": "Cloudflare 快速通道",
+        "cloudflare_token": "Cloudflare 通道（權杖）",
+        "playwright": "Playwright（本機）",
+        "browserbase": "Browserbase（雲端）",
+        "brave-search": "Brave Search",
+        "exa": "Exa",
+        "firecrawl": "Firecrawl"
       }
     }
   }

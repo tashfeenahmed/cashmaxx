@@ -11,6 +11,11 @@ import type {
   CashmaxxWallet,
   ComputePaymentMode,
   EarningMethod,
+  EmailProvider,
+  IntegrationField,
+  IntegrationItem,
+  IntegrationSummary,
+  IntegrationTestResult,
   LedgerCategoryRow,
   OwnerSession,
   PnlWindow,
@@ -276,7 +281,68 @@ export function normalizeSettings(value: unknown): CashmaxxSettings {
     publicPnl: record.publicPnl === true,
     frozen: record.frozen === true,
     frozenReason: nullableString(record.frozenReason),
+    emailProvider: EMAIL_PROVIDERS.has(str(record.emailProvider)) ? (str(record.emailProvider) as EmailProvider) : "none",
+    emailDailyCap: int(record.emailDailyCap, 20),
+    emailWarmup: record.emailWarmup !== false,
+    socialDailyCap: int(record.socialDailyCap, 3),
+    hostingEnabled: record.hostingEnabled === true,
     publicPnlUrl: nullableString(record.publicPnlUrl ?? outer.publicPnlUrl),
+  };
+}
+
+const EMAIL_PROVIDERS = new Set(["none", "gmail", "agentmail"]);
+
+function normalizeField(value: unknown): IntegrationField | null {
+  const row = asRecord(value);
+  const name = str(row.name);
+  if (!name) return null;
+  const field: IntegrationField = {
+    name,
+    label: str(row.label) || name,
+    secret: row.secret === true,
+    required: row.required !== false,
+    placeholder: str(row.placeholder),
+    choices: asStringList<string>(row.choices),
+    set: row.set === true,
+  };
+  // Never keep a value for a secret, even if a proxy sent one by mistake.
+  if (!field.secret && row.value !== undefined) field.value = row.value === null ? null : str(row.value);
+  return field;
+}
+
+function normalizeLastTest(value: unknown): IntegrationTestResult | null {
+  if (!value || typeof value !== "object") return null;
+  const row = asRecord(value);
+  if (typeof row.ok !== "boolean") return null;
+  return { ok: row.ok, message: str(row.message), at: nullableString(row.at) };
+}
+
+export function normalizeIntegrationSummary(value: unknown): IntegrationSummary | null {
+  const row = asRecord(value);
+  const id = str(row.id);
+  if (!id) return null;
+  return {
+    id,
+    label: str(row.label) || id,
+    kind: str(row.kind) || "guard",
+    category: str(row.category),
+    connected: typeof row.connected === "boolean" ? row.connected : null,
+  };
+}
+
+export function normalizeIntegrationItem(value: unknown): IntegrationItem | null {
+  const base = normalizeIntegrationSummary(value);
+  if (!base) return null;
+  const row = asRecord(value);
+  return {
+    ...base,
+    summary: str(row.summary),
+    docs_url: str(row.docs_url),
+    fields: (Array.isArray(row.fields) ? row.fields : [])
+      .map(normalizeField)
+      .filter((field): field is IntegrationField => field !== null),
+    connected_at: nullableString(row.connected_at),
+    last_test: normalizeLastTest(row.last_test),
   };
 }
 
@@ -356,4 +422,57 @@ export async function createOwnerSession({ transport }: CashmaxxConnection, pin:
   const session = str(body.session);
   if (!session) throw new CashmaxxError(502, "bad_response", "The guard did not return a session.");
   return { session, expires_at: str(body.expires_at) };
+}
+
+// ---- integrations ------------------------------------------------------------------------
+
+/** Plain read (agent token): statuses only, enough for the badges before the PIN. */
+export async function fetchIntegrationSummaries(token: string): Promise<IntegrationSummary[]> {
+  const body = await cashmaxxGet(token, "/integrations");
+  return listFrom(body, "integrations", "items")
+    .map(normalizeIntegrationSummary)
+    .filter((item): item is IntegrationSummary => item !== null);
+}
+
+/** Owner listing with the field specs, connected time and last test. */
+export async function listIntegrations(
+  { transport }: CashmaxxConnection,
+  ownerSession: string,
+): Promise<IntegrationItem[]> {
+  const body = await cashmaxxMutation(transport, "cashmaxx.integrations.list", { owner_session: ownerSession });
+  return listFrom(body, "integrations", "items")
+    .map(normalizeIntegrationItem)
+    .filter((item): item is IntegrationItem => item !== null);
+}
+
+/** Merge `fields` into the integration. A secret left out (or `""`) keeps its stored value. */
+export async function updateIntegration(
+  { transport }: CashmaxxConnection,
+  id: string,
+  fields: Record<string, string>,
+  ownerSession: string,
+): Promise<IntegrationItem | null> {
+  const body = await cashmaxxMutation(transport, "cashmaxx.integrations.update", {
+    id,
+    fields,
+    owner_session: ownerSession,
+  });
+  const record = asRecord(body);
+  return normalizeIntegrationItem(record.integration ?? body);
+}
+
+export async function testIntegration(
+  { transport }: CashmaxxConnection,
+  id: string,
+  ownerSession: string,
+): Promise<{ ok: boolean; message: string }> {
+  const body = asRecord(await cashmaxxMutation(transport, "cashmaxx.integrations.test", {
+    id,
+    owner_session: ownerSession,
+  }));
+  return { ok: body.ok === true, message: str(body.message) };
+}
+
+export function removeIntegration({ transport }: CashmaxxConnection, id: string, ownerSession: string) {
+  return cashmaxxMutation(transport, "cashmaxx.integrations.remove", { id, owner_session: ownerSession });
 }
