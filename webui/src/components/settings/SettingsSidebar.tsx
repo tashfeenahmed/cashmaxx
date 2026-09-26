@@ -13,6 +13,7 @@ import {
   Server,
   ShieldCheck,
   SlidersHorizontal,
+  Wallet, // cashmaxx: sidebar icon
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -40,6 +41,7 @@ const SETTINGS_NAV_ITEMS: Array<{ key: SettingsSectionKey; icon: LucideIcon; fal
   { key: "capabilities", icon: Blocks, fallback: "Capabilities" },
   { key: "runtime", icon: Server, fallback: "System" },
   { key: "advanced", icon: ShieldCheck, fallback: "Advanced" },
+  { key: "cashmaxx", icon: Wallet, fallback: "Cashmaxx" }, // cashmaxx: sidebar entry
   { key: "about", icon: Info, fallback: "About" },
 ];
 

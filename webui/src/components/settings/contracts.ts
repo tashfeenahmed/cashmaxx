@@ -17,7 +17,8 @@ export type SettingsSectionKey =
   | "memory"
   | "skills"
   | "runtime"
-  | "advanced";
+  | "advanced"
+  | "cashmaxx"; // cashmaxx: wallet, approvals and guard settings section
 
 export function isCapabilitySection(section: SettingsSectionKey): boolean {
   return ["capabilities", "image", "voice", "browser", "memory"].includes(section);

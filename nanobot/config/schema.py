@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 from pydantic import AliasChoices, ConfigDict, Field, PrivateAttr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from cashmaxx.config import CashmaxxAgentConfig  # cashmaxx: guard URL + agent token model
 from nanobot.config.timezone import detect_system_timezone
 from nanobot.config_base import Base
 from nanobot.cron.types import CronSchedule
@@ -436,6 +437,7 @@ class Config(BaseSettings):
         validation_alias=AliasChoices("modelPresets", "model_presets"),
         serialization_alias="modelPresets",
     )
+    cashmaxx: CashmaxxAgentConfig | None = None  # cashmaxx: set by `cashmaxx onboard`
 
     def __init__(self, **values: Any) -> None:
         if not type(self).__pydantic_complete__:

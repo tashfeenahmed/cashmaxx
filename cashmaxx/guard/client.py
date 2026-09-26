@@ -7,7 +7,7 @@ fail closed.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import httpx
 
@@ -23,9 +23,12 @@ class GuardError(Exception):
         self.message = message
 
 
-class GuardUnavailable(GuardError):
+class GuardUnavailableError(GuardError):
     def __init__(self, message: str) -> None:
         super().__init__(503, "guard_unavailable", message)
+
+
+GuardUnavailable = GuardUnavailableError  # older name, kept for callers
 
 
 class GuardClient:
@@ -62,19 +65,20 @@ class GuardClient:
         try:
             resp = await self._http.request(method, path, json=json, params=params)
         except httpx.HTTPError as exc:
-            raise GuardUnavailable(f"guard unreachable: {exc}") from exc
+            raise GuardUnavailableError(f"guard unreachable: {exc}") from exc
         try:
-            body = resp.json()
+            decoded: object = resp.json()
         except ValueError:
-            body = {"error": "bad_response", "message": resp.text[:500]}
+            decoded = {"error": "bad_response", "message": resp.text[:500]}
+        if not isinstance(decoded, dict):
+            raise GuardError(resp.status_code, "bad_response", "expected a JSON object")
+        body: JSON = {str(k): v for k, v in cast(dict[object, Any], decoded).items()}
         if resp.status_code >= 400:
             raise GuardError(
                 resp.status_code,
                 str(body.get("error", "error")),
                 str(body.get("message", resp.reason_phrase)),
             )
-        if not isinstance(body, dict):
-            raise GuardError(resp.status_code, "bad_response", "expected a JSON object")
         return body
 
     # --- read ---------------------------------------------------------------------------------
@@ -120,13 +124,21 @@ class GuardClient:
         )
 
     async def x402_fetch(
-        self, *, url: str, method: str = "GET", body: str | None = None, max_usd: str, purpose: str
+        self,
+        *,
+        url: str,
+        method: str = "GET",
+        body: str | None = None,
+        max_usd: str,
+        purpose: str,
+        idempotency_key: str | None = None,
     ) -> JSON:
-        return await self._request(
-            "POST",
-            "/x402/fetch",
-            json={"url": url, "method": method, "body": body, "max_usd": max_usd, "purpose": purpose},
-        )
+        payload: JSON = {
+            "url": url, "method": method, "body": body, "max_usd": max_usd, "purpose": purpose,
+        }
+        if idempotency_key:
+            payload["idempotency_key"] = idempotency_key
+        return await self._request("POST", "/x402/fetch", json=payload)
 
     async def record_cost(self, *, amount_usd: str, category: str, note: str) -> JSON:
         return await self._request(

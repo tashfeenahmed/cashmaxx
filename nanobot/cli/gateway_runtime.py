@@ -703,6 +703,15 @@ def _run_gateway(
 
     cron.on_job = on_cron_job
 
+    # cashmaxx: register /cashmaxx /pause /resume /freeze and the /api/cashmaxx proxy.
+    if config.cashmaxx is not None:
+        try:
+            from cashmaxx.plugin import install as cashmaxx_install
+
+            cashmaxx_install(agent, cron, config)
+        except Exception:
+            logger.exception("cashmaxx: plugin install failed; wallet tools still fail closed")
+
     def _webui_runtime_model_name() -> str | None:
         return agent.model.strip() or None
 

@@ -191,6 +191,7 @@ const SETTINGS_SECTION_KEYS: SettingsSectionKey[] = [
   "skills",
   "runtime",
   "advanced",
+  "cashmaxx", // cashmaxx: #/settings?section=cashmaxx
 ];
 
 function isSettingsSectionKey(value: string | null): value is SettingsSectionKey {

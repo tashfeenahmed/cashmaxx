@@ -26,6 +26,7 @@ from websockets.datastructures import Headers
 from websockets.http11 import Request as WsRequest
 from websockets.http11 import Response
 
+from cashmaxx.plugin import webui_routes as _cashmaxx_routes  # cashmaxx: /api/cashmaxx proxy
 from nanobot.command.builtin import builtin_command_palette
 from nanobot.cron.session_turns import is_bound_cron_job
 from nanobot.cron.types import CronJob, CronSchedule
@@ -514,6 +515,8 @@ class GatewayHTTPHandler:
     def _is_webui_mutation_path(self, path: str) -> bool:
         if self.settings_routes.is_mutation_path(path):
             return True
+        if _cashmaxx_routes.is_mutation_path(path):  # cashmaxx: owner actions are socket-only
+            return True
         if re.match(r"^/api/sessions/[^/]+/delete$", path):
             return True
         if re.match(r"^/api/webui/automations/(enable|disable|delete|run|update)$", path):
@@ -538,6 +541,9 @@ class GatewayHTTPHandler:
         path = _WEBUI_MUTATION_PATHS.get(action)
         if path is not None:
             return path
+        cashmaxx_path = _cashmaxx_routes.mutation_path(action, payload)  # cashmaxx: actions
+        if cashmaxx_path is not None:
+            return cashmaxx_path
         if action == "session.delete":
             key = payload.get("key")
             if not isinstance(key, str) or not key.strip():
@@ -574,6 +580,13 @@ class GatewayHTTPHandler:
 
         # Settings routes (delegated)
         response = await self.settings_routes.dispatch(connection, request, got)
+        if response is not None:
+            return response
+
+        # cashmaxx: /api/cashmaxx/* proxy to the guard (same API token check as settings)
+        response = await _cashmaxx_routes.dispatch(
+            request, got, check_api_token=self.check_api_token
+        )
         if response is not None:
             return response
 

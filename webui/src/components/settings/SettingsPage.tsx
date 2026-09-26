@@ -7,6 +7,7 @@ import { isCapabilitySection, type SettingsSectionKey } from "@/components/setti
 import { SettingsFeature } from "@/components/settings/shared/SettingsFeature";
 
 import { SkillsCatalogSettings } from "@/components/settings/SkillsCatalogSettings";
+import { CashmaxxSettingsSection } from "@/cashmaxx/CashmaxxSection"; // cashmaxx: section page
 import { ImageGenerationSettings } from "@/components/settings/capabilities/ImageGenerationSettings";
 import { AdvancedSettings } from "@/components/settings/capabilities/SecuritySettings";
 import { TranscriptionSettings } from "@/components/settings/capabilities/TranscriptionSettings";
@@ -631,6 +632,8 @@ export function SettingsPage({
         return runtimeConfiguration("memory");
       case "advanced":
         return runtimeConfiguration("advanced");
+      case "cashmaxx": // cashmaxx: wallet, approvals and guard settings
+        return <CashmaxxSettingsSection />;
       default:
         return null;
     }

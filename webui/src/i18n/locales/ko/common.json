@@ -210,6 +210,7 @@
       "ariaLabel": "설정 섹션"
     },
     "nav": {
+      "cashmaxx": "Cashmaxx",
       "about": "정보",
       "capabilities": "기능",
       "general": "일반",
@@ -1965,6 +1966,252 @@
       "manualPlaceholder": "/Users/name/project",
       "usePath": "경로 사용",
       "absolutePathRequired": "이 머신의 절대 폴더 경로를 입력하세요."
+    }
+  },
+  "cashmaxx": {
+    "title": "Cashmaxx",
+    "pagesLabel": "Cashmaxx pages",
+    "pages": {
+      "overview": "Overview",
+      "approvals": "Approvals",
+      "settings": "Settings"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "retry": "Retry",
+      "copied": "Copied",
+      "copyAddress": "Copy wallet address",
+      "copyRecipient": "Copy recipient address"
+    },
+    "guard": {
+      "unavailableTitle": "Guard is not running",
+      "unavailableBody": "Cashmaxx can't reach its wallet guard. Start it with",
+      "notConfiguredTitle": "Cashmaxx is not set up",
+      "notConfiguredBody": "This gateway has no Cashmaxx guard configured. Set it up with"
+    },
+    "errors": {
+      "frozen": "Spending is frozen.",
+      "invalid": "The guard rejected this change.",
+      "owner": "This needs the owner PIN."
+    },
+    "pin": {
+      "title": "Owner PIN",
+      "description": "Enter your owner PIN to approve payments or change settings. The session is kept only in this tab's memory.",
+      "label": "PIN",
+      "submit": "Unlock",
+      "wrong": "That PIN is not correct.",
+      "rateLimited": "Too many attempts. Wait a minute and try again."
+    },
+    "network": {
+      "sepolia": "Base Sepolia · Testnet",
+      "sepoliaNote": "Testnet: this wallet holds test USDC with no real value.",
+      "mainnet": "Base mainnet",
+      "fake": "Fake wallet (local)",
+      "unknown": "Unknown network"
+    },
+    "wallet": {
+      "title": "Wallet",
+      "address": "Address",
+      "fundHint": "Send USDC on this network to fund the agent. The guard controls every payment out.",
+      "balance": "USDC balance",
+      "available": "Available budget",
+      "qrAlt": "QR code for the wallet address"
+    },
+    "pnl": {
+      "title": "Profit and loss",
+      "windowLabel": "P&L window",
+      "windows": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "all": "All time"
+      },
+      "income": "Income",
+      "costs": "Costs",
+      "cost": "Cost",
+      "net": "Net",
+      "gain": "profit",
+      "loss": "loss",
+      "byCategory": "By category",
+      "category": "Category",
+      "type": "Type",
+      "amount": "Amount",
+      "empty": "No income or costs in this window yet."
+    },
+    "categories": {
+      "sale_stripe": "Stripe sales",
+      "sale_x402": "x402 sales",
+      "transfer_in": "Transfers in",
+      "bounty": "Bounties",
+      "marketplace": "Marketplaces",
+      "payment_out": "Payments out",
+      "compute": "Compute",
+      "reimbursement": "Reimbursements",
+      "fees": "Fees",
+      "other": "Other"
+    },
+    "events": {
+      "title": "Recent events",
+      "empty": "No events yet.",
+      "actors": {
+        "agent": "agent",
+        "owner": "owner",
+        "guard": "guard"
+      }
+    },
+    "freeze": {
+      "killSwitch": "Kill switch",
+      "killSwitchBody": "Freezing stops all spending at once. Anyone can freeze; only the owner can unfreeze.",
+      "freeze": "Freeze",
+      "frozenTitle": "Spending is frozen",
+      "frozenBody": "The guard refuses every payment until the owner unfreezes it.",
+      "unfreeze": "Unfreeze (PIN)",
+      "confirmTitle": "Freeze all spending?",
+      "confirmBody": "The guard will refuse every payment, including approved ones, until you unfreeze it with the owner PIN.",
+      "reasonLabel": "Reason (optional)",
+      "defaultReason": "Frozen from the WebUI",
+      "confirmAction": "Freeze now"
+    },
+    "approvals": {
+      "telegramNote": "Approvals are also available in the guard's Telegram bot. Both read the same queue, so they stay in sync.",
+      "emptyTitle": "Nothing waiting",
+      "emptyBody": "Payments that need your approval will show up here.",
+      "listLabel": "Pending approvals",
+      "to": "To",
+      "purpose": "Purpose",
+      "approve": "Approve",
+      "deny": "Deny",
+      "approved": "Approved {{amount}}.",
+      "denied": "Denied {{amount}}.",
+      "reasons": {
+        "over_threshold": "Over threshold",
+        "new_recipient": "New recipient"
+      }
+    },
+    "validation": {
+      "decimal": "Enter a non-negative amount, like 5 or 2.50.",
+      "maxPerHour": "Enter a whole number from 1 to 1000.",
+      "interval": "Enter a whole number of hours from 1 to 720.",
+      "allowlist": "Use a wallet address (0x + 40 hex characters) or a host name.",
+      "address": "Use a wallet address: 0x followed by 40 hex characters.",
+      "ownerWalletRequired": "Reimburse needs the owner wallet address.",
+      "url": "Use a full http(s) URL.",
+      "gatewayRequired": "The x402 gateway mode needs a gateway URL.",
+      "perTxOverDaily": "The per-payment approval threshold is above the daily cap, so it never triggers.",
+      "dailyOverBudget": "The daily cap is above the total budget."
+    },
+    "settings": {
+      "save": "Save with PIN",
+      "saved": "Settings saved.",
+      "unsaved": "Unsaved changes. Saving asks for the owner PIN.",
+      "fixErrors": "Fix the highlighted fields to save.",
+      "hoursSuffix": "h",
+      "networkReadOnly": "Change the network with the cashmaxx CLI.",
+      "publicUrlFallback": "Served by the guard at /public/pnl",
+      "groups": {
+        "budget": "Budget",
+        "approvals": "Approvals",
+        "rules": "Safety rules",
+        "earning": "Earning methods",
+        "compute": "Compute payments",
+        "public": "Public P&L",
+        "network": "Network"
+      },
+      "fields": {
+        "budgetUsd": "Budget",
+        "perTxApprovalUsd": "Approval threshold per payment",
+        "dailyCapUsd": "Daily spending cap",
+        "maxPaymentsPerHour": "Max payments per hour",
+        "newRecipientNeedsApproval": "New recipients need approval",
+        "allowlist": "Allowlist",
+        "lossStopUsd": "Loss stop at",
+        "computePaymentMode": "Compute payment mode",
+        "ownerWallet": "Owner wallet",
+        "reimburseIntervalHours": "Reimburse every",
+        "ownerTopupThresholdUsd": "Top-up threshold",
+        "x402GatewayUrl": "x402 gateway URL",
+        "publicPnl": "Publish P&L",
+        "publicUrl": "Public URL",
+        "network": "Network"
+      },
+      "hints": {
+        "budgetUsd": "The most the agent may spend in total.",
+        "perTxApprovalUsd": "Payments above this wait for your approval.",
+        "dailyCapUsd": "Hard cap on money out per UTC day, approved payments included.",
+        "maxPaymentsPerHour": "Stops a runaway loop.",
+        "newRecipientNeedsApproval": "The first payment to an address or host the agent has not paid before waits for you.",
+        "allowlist": "Addresses and hosts that skip the new-recipient approval.",
+        "lossStopUsd": "Freeze automatically when the 7-day net loss passes this amount.",
+        "ownerWallet": "Your wallet that receives the reimbursements.",
+        "reimburseIntervalHours": "How often the guard pays back compute spend.",
+        "ownerTopupThresholdUsd": "Ask you to top up when OpenRouter credit falls below this.",
+        "x402GatewayUrl": "The gateway that sells inference per request over x402.",
+        "publicPnl": "Anyone with the link can see income, costs and net. No addresses or secrets."
+      },
+      "rules": {
+        "no_trading": {
+          "title": "No trading",
+          "description": "No swaps, tokens or speculation; the guard only sends USDC."
+        },
+        "no_spam": {
+          "title": "No spam",
+          "description": "Rate-limits outbound posts and DMs, and forbids impersonation."
+        },
+        "bounty_review": {
+          "title": "Review bounty submissions",
+          "description": "Bounty and marketplace submissions wait for your approval."
+        },
+        "loss_stop": {
+          "title": "Loss stop",
+          "description": "Freeze spending when the 7-day net loss passes a limit."
+        }
+      },
+      "earning": {
+        "digital_products": {
+          "title": "Digital products",
+          "description": "Sell guides, templates and tools through Stripe payment links."
+        },
+        "x402_apis": {
+          "title": "Paid APIs (x402)",
+          "description": "Sell small API calls paid per request in USDC."
+        },
+        "bounties": {
+          "title": "Bounties",
+          "description": "Take on open bounties and get paid on acceptance."
+        },
+        "agent_marketplaces": {
+          "title": "Agent marketplaces",
+          "description": "Offer services on marketplaces where agents hire agents."
+        }
+      },
+      "compute": {
+        "explainer": "Both the OpenRouter account and the wallet belong to you. The agent only controls the wallet, and this decides how its compute spend counts against its budget.",
+        "modes": {
+          "virtual": {
+            "title": "Virtual",
+            "description": "Compute spend is recorded as a cost and lowers the available budget. No money moves."
+          },
+          "reimburse": {
+            "title": "Reimburse",
+            "description": "As virtual, and the guard pays the compute spend back to your wallet in USDC on a schedule."
+          },
+          "owner_topup": {
+            "title": "Owner top-up",
+            "description": "The guard's Telegram bot asks you to top up OpenRouter when credit runs low."
+          },
+          "x402_gateway": {
+            "title": "x402 gateway",
+            "description": "Inference is bought per request from an x402 gateway with the wallet. Experimental."
+          }
+        }
+      },
+      "allowlist": {
+        "empty": "No entries.",
+        "add": "Add",
+        "addLabel": "Add allowlist entry",
+        "placeholder": "0x… or api.example.com",
+        "remove": "Remove {{entry}}",
+        "duplicate": "That entry is already on the list."
+      }
     }
   }
 }
