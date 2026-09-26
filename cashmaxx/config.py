@@ -23,6 +23,7 @@ Network = Literal["base-sepolia", "base", "fake"]
 EarningMethod = Literal["digital_products", "x402_apis", "bounties", "agent_marketplaces"]
 Rule = Literal["no_trading", "no_spam", "bounty_review", "loss_stop"]
 ComputePaymentMode = Literal["virtual", "reimburse", "owner_topup", "x402_gateway"]
+EmailProvider = Literal["none", "gmail", "agentmail"]
 
 ALL_EARNING_METHODS: tuple[EarningMethod, ...] = (
     "digital_products",
@@ -76,6 +77,12 @@ class CashmaxxSettings(Base):
     public_pnl: bool = False
     frozen: bool = False
     frozen_reason: str | None = None
+    # Outbound email and social posts (see docs/cashmaxx/ARCHITECTURE.md, "Integrations").
+    email_provider: EmailProvider = "none"
+    email_daily_cap: int = Field(default=20, ge=0, le=2000)
+    email_warmup: bool = True  # Gmail only: ramp the daily cap over the first 4 weeks
+    social_daily_cap: int = Field(default=3, ge=0, le=100)
+    hosting_enabled: bool = False
 
     @field_validator(
         "budget_usd", "per_tx_approval_usd", "daily_cap_usd", "loss_stop_usd",
@@ -119,6 +126,19 @@ class GuardTelegramConfig(Base):
     owner_chat_id: str = ""
 
 
+class IntegrationConfig(Base):
+    """One guard-held integration: its fields (secrets included) and when it was connected.
+
+    ``fields`` keys are the catalog field names (``cashmaxx.integrations_catalog``).
+    """
+
+    fields: dict[str, str] = Field(default_factory=dict)
+    connected_at: str | None = None  # ISO timestamp; the Gmail warm-up counts days from here
+    last_test_ok: bool | None = None
+    last_test_message: str | None = None
+    last_test_at: str | None = None
+
+
 class GuardConfig(Base):
     """Full guard config, including secrets. Only the guard process reads this file."""
 
@@ -132,6 +152,9 @@ class GuardConfig(Base):
     stripe_restricted_key: str = ""
     openrouter_api_key: str = ""
     telegram: GuardTelegramConfig = Field(default_factory=GuardTelegramConfig)
+    # Guard-held integrations added after onboarding: gmail, agentmail, bluesky, x, reddit,
+    # hosting. The original five (openrouter, cdp, stripe, telegram) keep their fields above.
+    integrations: dict[str, IntegrationConfig] = Field(default_factory=dict)
 
 
 class CashmaxxAgentConfig(Base):

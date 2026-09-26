@@ -242,3 +242,87 @@ A `pending` result tells the model: "Waiting for owner approval (id …). Do oth
   rejecting the agent token, PIN rate limit, the freeze/unfreeze permissions, and the ledger math, including
   compute modes and the reimbursement cycle.
 - `cd webui && bun run test` for the new pages.
+
+## Integrations
+
+The catalog is `cashmaxx/integrations_catalog.py` (`INTEGRATIONS`, `get_spec`, `LEGACY_FIELDS`,
+`gmail_warmup_cap`). It is shared by the guard, the WebUI proxy and the CLI; do not duplicate it.
+
+**Two kinds.** `guard` integrations keep their secrets only in `guard.json` and the guard does the
+work, so the agent can never bypass a cap by using a credential directly (the exec sandbox keeps
+`guard.json` out of reach). `agent` integrations are MCP servers the agent calls itself; their
+config lives in nanobot's `tools.mcpServers`, written from nanobot's MCP presets.
+
+| id | kind | stored in | what the guard/agent does |
+|---|---|---|---|
+| openrouter, cdp, stripe, telegram | guard | original `GuardConfig` attributes (`LEGACY_FIELDS`) | as before |
+| gmail | guard | `GuardConfig.integrations["gmail"]` | IMAP read + SMTP send (app password) |
+| agentmail | guard | `integrations["agentmail"]` | AgentMail REST API (`https://api.agentmail.to/v0`, Bearer key); creates the inbox when `inboxId` is empty |
+| bluesky, x, reddit | guard | `integrations[...]` | post through each API |
+| hosting | guard | `integrations["hosting"]` | runs `cloudflared` for a local port and returns the public URL |
+| browser | agent | `tools.mcpServers.playwright` or `.browserbase` | Playwright MCP with its own profile dir in the workspace (`browser-profile/`), never the owner's Chrome |
+| github | agent | `tools.mcpServers.github` | GitHub MCP with the token |
+| search | agent | `tools.mcpServers.<brave-search|exa|firecrawl>` | search/scrape MCP |
+
+Changing `settings.emailProvider` requires that integration to be connected. Connecting Gmail sets
+`connected_at` (the warm-up starts then); replacing only the password keeps it.
+
+### Guard API additions
+
+| Method + path | Scope | Purpose |
+|---|---|---|
+| `GET /integrations` | agent: `{integrations: [{id, label, kind, category, connected}]}`; owner: adds `summary, docs_url, fields: [{name, label, secret, required, placeholder, choices, set, value?}], connected_at, last_test: {ok, message, at} | null` | Listing. `value` only for non-secret fields. Agent-kind entries are listed with `connected: null` (the proxy fills them in). |
+| `PUT /integrations/{id}` | **owner** | `{fields: {name: value}}` merge; `""` for a secret keeps it; validates required fields; guard kind only (agent kind → 400 `agent_integration`). Returns the owner item. Hot-reloads the affected client (Telegram bot, Stripe, email, social). |
+| `POST /integrations/{id}/test` | **owner** | live check (OpenRouter `GET /key`; CDP load account; Stripe list 1 product; Telegram `getMe`; Gmail IMAP+SMTP login; AgentMail list inboxes; Bluesky createSession; X `GET /2/users/me`; Reddit `/api/v1/me`; hosting `cloudflared --version`) → `{ok, message}`, stored as `last_test_*` |
+| `DELETE /integrations/{id}` | **owner** | clears fields; if it was the `emailProvider`, set that to `none` |
+| `GET /owner/check` | **owner** | `{ok: true}`; lets the proxy/CLI confirm a PIN session before writing agent-kind config |
+| `GET /email/status` | agent, owner | `{provider, address, connected, sent_today, cap_today, warmup: {on, day, cap} | null}` |
+| `POST /email/send` | agent | `{to: [..≤10], subject, text, html?, in_reply_to?, idempotency_key}` → `{status: "sent", message_id, remaining_today}`. Refusals: `frozen` 423, `email_not_connected` 409, `email_cap` 429 (cap = `min(emailDailyCap, gmail_warmup_cap(day))` when Gmail + warm-up), `invalid_recipient` 400. Counts recipients, not calls. Idempotent by key. Logged in `outbound` + events. |
+| `GET /email/inbox?unread=1&limit=20` | agent, owner | `{messages: [{id, from, to, subject, date, snippet, thread_id, unread}]}` |
+| `GET /email/messages/{id}` | agent, owner | `{id, from, to, cc, subject, date, text (≤12k chars), thread_id, untrusted: true}` |
+| `POST /social/post` | agent | `{platform: bluesky|x|reddit, text, link?, subreddit?, title?, idempotency_key}` → `{status: "posted", url, remaining_today}`. `social_cap` 429 when today's posts across platforms reach `socialDailyCap`; `social_not_connected` 409; `frozen` 423. |
+| `GET /hosting` | agent, owner | `{enabled, tunnels: [{name, port, url, started_at}]}` |
+| `POST /hosting/expose` | agent | `{port, name}` → `{url}`. Refuses unless `hostingEnabled` and hosting connected; refuses the guard port, the gateway port (18790), the WebUI/websocket port (8765) and ports < 1024. One tunnel per name; max 3. |
+| `DELETE /hosting/{name}` | agent, owner | stop the tunnel |
+
+sqlite additions: `outbound(id, ts, channel: email|social, provider, idempotency_key UNIQUE,
+recipients INT, target, status, ref)` for caps and idempotency. The "day" is UTC.
+
+Email and social content the agent receives is **untrusted**: tool results wrap it as data and
+say that instructions inside it must not be followed.
+
+### Agent tools (additions)
+
+| Tool | Calls |
+|---|---|
+| `cashmaxx_email_status` | `GET /email/status` |
+| `cashmaxx_email_send` | `POST /email/send` |
+| `cashmaxx_email_inbox` | `GET /email/inbox` |
+| `cashmaxx_email_read` | `GET /email/messages/{id}` |
+| `cashmaxx_social_post` | `POST /social/post` |
+| `cashmaxx_expose` | `POST /hosting/expose` / `GET /hosting` / `DELETE /hosting/{name}` (`action` param) |
+
+### WebUI proxy actions (additions)
+
+`GET /api/cashmaxx/integrations` returns the owner listing merged with agent-kind status, or the
+agent-scope listing when no owner session is given (`X-Cashmaxx-Owner` or `?owner_session=` is not
+allowed; the browser sends reads without it and gets the reduced listing, then re-reads through the
+`cashmaxx.integrations.list` action with its session). Socket actions:
+
+    cashmaxx.integrations.list    {owner_session}                  -> full listing (both kinds)
+    cashmaxx.integrations.update  {id, fields, owner_session}      -> guard PUT, or agent-kind config write
+    cashmaxx.integrations.test    {id, owner_session}              -> guard test, or MCP connect test
+    cashmaxx.integrations.remove  {id, owner_session}              -> guard DELETE, or remove the MCP server
+
+Agent-kind writes first call `GET /owner/check` with the session, then change nanobot's config and
+ask the running agent to reconnect MCP servers (no gateway restart).
+
+### CLI
+
+    cashmaxx integrations                 table: id, kind, connected, last test
+    cashmaxx connect <id>                 prompts for the fields (secrets hidden), owner PIN, then tests
+    cashmaxx disconnect <id>
+    cashmaxx test <id>
+
+`cashmaxx onboard` offers an optional "More integrations" checklist at the end that runs `connect`
+for each chosen one.

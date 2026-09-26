@@ -155,6 +155,53 @@ class GuardClient:
     async def freeze(self, reason: str) -> JSON:
         return await self._request("POST", "/freeze", json={"reason": reason})
 
+    # --- integrations (agent) -------------------------------------------------------------------
+    async def integrations(self) -> JSON:
+        """Agent scope: ``{"integrations": [{id, label, kind, category, connected}]}``."""
+        return await self._request("GET", "/integrations")
+
+    async def email_status(self) -> JSON:
+        return await self._request("GET", "/email/status")
+
+    async def email_send(
+        self, *, to: list[str], subject: str, text: str, idempotency_key: str,
+        html: str | None = None, in_reply_to: str | None = None,
+    ) -> JSON:
+        payload: JSON = {"to": to, "subject": subject, "text": text,
+                         "idempotency_key": idempotency_key}
+        if html is not None:
+            payload["html"] = html
+        if in_reply_to is not None:
+            payload["in_reply_to"] = in_reply_to
+        return await self._request("POST", "/email/send", json=payload)
+
+    async def email_inbox(self, *, unread_only: bool = True, limit: int = 20) -> JSON:
+        return await self._request(
+            "GET", "/email/inbox", params={"unread": "1" if unread_only else "0", "limit": limit}
+        )
+
+    async def email_message(self, message_id: str) -> JSON:
+        return await self._request("GET", f"/email/messages/{message_id}")
+
+    async def social_post(
+        self, *, platform: str, text: str, idempotency_key: str,
+        link: str | None = None, subreddit: str | None = None, title: str | None = None,
+    ) -> JSON:
+        payload: JSON = {"platform": platform, "text": text, "idempotency_key": idempotency_key}
+        for key, value in (("link", link), ("subreddit", subreddit), ("title", title)):
+            if value is not None:
+                payload[key] = value
+        return await self._request("POST", "/social/post", json=payload)
+
+    async def hosting_list(self) -> JSON:
+        return await self._request("GET", "/hosting")
+
+    async def hosting_expose(self, *, port: int, name: str) -> JSON:
+        return await self._request("POST", "/hosting/expose", json={"port": port, "name": name})
+
+    async def hosting_stop(self, name: str) -> JSON:
+        return await self._request("DELETE", f"/hosting/{name}")
+
     # --- owner actions (need an owner session) ------------------------------------------------
     async def owner_session(self, pin: str) -> JSON:
         return await self._request("POST", "/owner/session", json={"pin": pin})
@@ -170,3 +217,21 @@ class GuardClient:
 
     async def unfreeze(self) -> JSON:
         return await self._request("POST", "/unfreeze")
+
+    async def owner_check(self) -> JSON:
+        """200 ``{"ok": true}`` when the owner session is live; used before agent-side config writes."""
+        return await self._request("GET", "/owner/check")
+
+    async def owner_integrations(self) -> JSON:
+        """Owner scope: full listing with field specs, ``set`` flags and last test results."""
+        return await self._request("GET", "/integrations")
+
+    async def update_integration(self, integration_id: str, fields: dict[str, str]) -> JSON:
+        """Merge fields. An empty string for a secret keeps the stored value."""
+        return await self._request("PUT", f"/integrations/{integration_id}", json={"fields": fields})
+
+    async def test_integration(self, integration_id: str) -> JSON:
+        return await self._request("POST", f"/integrations/{integration_id}/test")
+
+    async def remove_integration(self, integration_id: str) -> JSON:
+        return await self._request("DELETE", f"/integrations/{integration_id}")
