@@ -39,7 +39,7 @@ BUDGET_PRESETS: dict[str, tuple[Decimal, Decimal, Decimal]] = {
     "100": (Decimal("100"), Decimal("10"), Decimal("25")),
 }
 
-DEFAULT_GUARD_PORT = 18790
+DEFAULT_GUARD_PORT = 18799  # nanobot's gateway owns 18790
 
 
 def cashmaxx_home() -> Path:

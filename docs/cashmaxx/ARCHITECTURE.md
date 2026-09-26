@@ -28,7 +28,7 @@ It is built on a fork of [HKUDS/nanobot](https://github.com/HKUDS/nanobot) (MIT)
 
 ```
 ┌──────────────── agent process (nanobot gateway) ───────────────┐      ┌──────── guard process ───────────────┐
-│ AgentLoop + tools                                               │ HTTP │ aiohttp server on 127.0.0.1:18790    │
+│ AgentLoop + tools                                               │ HTTP │ aiohttp server on 127.0.0.1:18799    │
 │  cashmaxx.plugin.tools  ──── agent token ──────────────────────────▶│  policy engine                        │
 │  /pause /resume /cashmaxx commands                              │      │  approvals queue (sqlite)             │
 │  WebUI (React) → /api/cashmaxx/* proxy ─── owner PIN passthrough ─▶│  ledger (sqlite)                      │
@@ -153,7 +153,7 @@ It is checked in this order and the first match wins:
 When a pending approval is approved, **steps 1–6 are re-checked at execution time.**
 Idempotency: the same `idempotency_key` returns the original result and never pays twice.
 
-## Guard HTTP API (JSON, `127.0.0.1:18790`)
+## Guard HTTP API (JSON, `127.0.0.1:18799`)
 
 Auth: `Authorization: Bearer <agent token>` (scope **agent**), or `X-Cashmaxx-Owner: <owner session>`
 (scope **owner**, obtained from `POST /owner/session` with the PIN, 12h TTL, kept in memory only).

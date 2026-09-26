@@ -201,7 +201,7 @@ def test_apply_nanobot_config() -> None:
     assert config.agents.defaults.provider == "openrouter"
     assert config.agents.defaults.model_preset is None
     assert config.cashmaxx is not None and config.cashmaxx.agent_token == "agent-tok"
-    assert config.cashmaxx.guard_url == "http://127.0.0.1:18790"
+    assert config.cashmaxx.guard_url == "http://127.0.0.1:18799"
     assert config.tools.restrict_to_workspace is True
     assert config.channels.telegram["inlineKeyboards"] is True  # type: ignore[attr-defined]
     dumped = config.model_dump(mode="json", by_alias=True)
@@ -235,6 +235,9 @@ def test_write_everything(tmp_path: Path) -> None:
     lines = "\n".join(ob.summary_lines(outcome, _answers()))
     assert "cashmaxx guard" in lines and "nanobot gateway" in lines and "0xfund" in lines
     assert "separate OS user" in lines
+    assert "Fund the wallet" in lines
+    fake = "\n".join(ob.summary_lines(outcome, _answers(network="fake")))
+    assert "Fund the wallet" not in fake and "4. " not in fake
 
 
 # --- the prompt flow with a scripted prompter ------------------------------------------------
@@ -391,5 +394,12 @@ def test_run_onboarding_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPat
         run_nanobot_onboard=fake_nanobot_onboard,
     )
     assert outcome.guard_config_path == tmp_path / "cmx" / "guard.json"
-    assert json.loads(cfg_path.read_text())["cashmaxx"]["guardUrl"] == "http://127.0.0.1:18790"
+    assert json.loads(cfg_path.read_text())["cashmaxx"]["guardUrl"] == "http://127.0.0.1:18799"
     assert (ws / "HEARTBEAT.md").exists() and (ws / "RULES.md").exists()
+
+
+def test_default_guard_port_does_not_clash_with_nanobot() -> None:
+    from cashmaxx.config import DEFAULT_GUARD_PORT
+    from nanobot.config.schema import ApiConfig, GatewayConfig
+
+    assert DEFAULT_GUARD_PORT not in {GatewayConfig().port, ApiConfig().port}

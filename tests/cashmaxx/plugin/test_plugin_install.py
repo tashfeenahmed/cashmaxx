@@ -26,13 +26,13 @@ def test_install_registers_commands_and_tools(workspace: Path) -> None:
 
     config = Config.model_validate({
         "agents": {"defaults": {"workspace": str(workspace)}},
-        "cashmaxx": {"guardUrl": "http://127.0.0.1:18790", "agentToken": "tok"},
+        "cashmaxx": {"guardUrl": "http://127.0.0.1:18799", "agentToken": "tok"},
     })
     plugin.reset()
     plugin.install(loop, None, config)
 
     assert plugin.state.installed
-    assert plugin.state.agent_config == CashmaxxAgentConfig(guard_url="http://127.0.0.1:18790",
+    assert plugin.state.agent_config == CashmaxxAgentConfig(guard_url="http://127.0.0.1:18799",
                                                             agent_token="tok")
     assert plugin.state.workspace == workspace
     for cmd in ("/cashmaxx", "/pause", "/resume", "/freeze"):

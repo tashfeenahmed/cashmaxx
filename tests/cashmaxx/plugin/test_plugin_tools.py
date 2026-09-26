@@ -170,7 +170,7 @@ async def test_x402_pending_denied_down(fake_guard: FakeGuard, allow_urls: None)
 
 
 async def test_x402_blocks_private_urls(fake_guard: FakeGuard) -> None:
-    result = await t.X402FetchTool().execute(url="http://127.0.0.1:18790/wallet", max_usd="1",
+    result = await t.X402FetchTool().execute(url="http://127.0.0.1:18799/wallet", max_usd="1",
                                              purpose="sneaky")
     assert _is_error(result) and "not allowed" in result
     assert fake_guard.requests == []

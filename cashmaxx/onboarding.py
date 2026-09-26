@@ -699,15 +699,13 @@ def summary_lines(outcome: OnboardOutcome, answers: OnboardAnswers) -> list[str]
     if outcome.skipped_files:
         lines.append("  Left alone (you edited them; rerun with --force to overwrite): "
                      + ", ".join(outcome.skipped_files))
-    lines += [
-        "",
-        "Next steps:",
-        "  1. Terminal 1: cashmaxx guard",
-        "  2. Terminal 2: nanobot gateway",
-        "  3. Fund the wallet address"
-        + (" (testnet USDC from faucet.circle.com)" if answers.network == "base-sepolia" else ""),
-        "  4. Check it with /cashmaxx in chat or `cashmaxx status`",
-    ]
+    steps = ["Terminal 1: cashmaxx guard", "Terminal 2: nanobot gateway"]
+    if answers.network != "fake":  # the fake wallet starts with simulated USDC
+        steps.append("Fund the wallet address"
+                     + (" (testnet USDC from faucet.circle.com)"
+                        if answers.network == "base-sepolia" else ""))
+    steps.append("Check it with /cashmaxx in chat or `cashmaxx status`")
+    lines += ["", "Next steps:"] + [f"  {i}. {step}" for i, step in enumerate(steps, 1)]
     for w in outcome.warnings:
         lines.append(f"Warning: {w}")
     lines.append(f"Warning: {SAME_MACHINE_WARNING}")

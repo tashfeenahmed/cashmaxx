@@ -18,6 +18,8 @@ import httpx
 from loguru import logger
 
 API_BASE = "https://api.telegram.org"
+POLL_RETRY_MIN_S = 5
+POLL_RETRY_MAX_S = 300
 MAX_TEXT = 4000
 
 
@@ -158,12 +160,14 @@ class TelegramBot:
 
     # --- polling ------------------------------------------------------------------------------
     async def _poll_forever(self) -> None:
+        delay = POLL_RETRY_MIN_S
         while True:
             try:
                 updates: list[dict[str, Any]] = await self._call("getUpdates", {
                     "offset": self._offset, "timeout": self._poll_timeout,
                     "allowed_updates": ["message", "callback_query"],
                 }) or []
+                delay = POLL_RETRY_MIN_S
                 for update in updates:
                     self._offset = max(self._offset, int(update.get("update_id", 0)) + 1)
                     try:
@@ -173,8 +177,11 @@ class TelegramBot:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                logger.warning("guard bot: polling error: {}", exc)
-                await asyncio.sleep(5)
+                # A bad token never fixes itself; back off so it doesn't flood the log.
+                hint = " (check the guard bot token in guard.json)" if "Unauthorized" in str(exc) else ""
+                logger.warning("guard bot: polling error: {}{}; retrying in {}s", exc, hint, delay)
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, POLL_RETRY_MAX_S)
 
     def start(self) -> None:
         if self.enabled and self.actions is not None and self._task is None:

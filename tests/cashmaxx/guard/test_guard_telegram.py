@@ -140,3 +140,26 @@ async def test_no_token_is_noop() -> None:
     bot.start()
     await bot.stop()
     assert api.calls == []
+
+
+async def test_polling_backs_off_on_repeated_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    import asyncio
+
+    from cashmaxx.guard import telegram_bot as tb
+
+    def unauthorized(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(401, json={"ok": False, "description": "Unauthorized"})
+
+    bot = TelegramBot("123:bad", OWNER_CHAT,
+                      http=httpx.AsyncClient(transport=httpx.MockTransport(unauthorized)))
+    delays: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        delays.append(seconds)
+        if len(delays) >= 8:
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(tb.asyncio, "sleep", fake_sleep)
+    with pytest.raises(asyncio.CancelledError):
+        await bot._poll_forever()  # pyright: ignore[reportPrivateUsage]
+    assert delays == [5, 10, 20, 40, 80, 160, 300, 300]
