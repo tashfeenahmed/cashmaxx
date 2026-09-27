@@ -2286,6 +2286,7 @@
         "warmup": "Làm nóng Gmail",
         "warmupHint": "Tăng dần giới hạn trong bốn tuần để tài khoản mới không bị đánh dấu là spam.",
         "warmupLine": "Tuần {{week}}/{{weeks}} (ngày {{day}}): tối đa {{cap}} email hôm nay, {{next}}/ngày từ {{date}}.",
+        "warmupLineCapped": "Tuần {{week}}/{{weeks}} (ngày {{day}}): tối đa {{cap}} email hôm nay, theo giới hạn hằng ngày của bạn.",
         "warmupDone": "Đã làm nóng xong: tối đa {{cap}} email mỗi ngày.",
         "warmupOff": "Tắt làm nóng: tối đa {{cap}} email mỗi ngày.",
         "warmupNotStarted": "Quá trình làm nóng bắt đầu khi Gmail được kết nối."

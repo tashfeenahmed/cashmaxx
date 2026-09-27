@@ -323,6 +323,12 @@ describe("Cashmaxx integrations: related settings", () => {
     await waitFor(() => expect(within(group).getByRole("radio", { name: "Gmail" })).toBeChecked());
   });
 
+  it("says the daily cap is the limit when the next warm-up step would not raise it", async () => {
+    await unlocked(undefined, { emailDailyCap: 20 });
+    const line = await within(card("gmail")).findByTestId("cashmaxx-gmail-warmup");
+    expect(line).toHaveTextContent("Week 2 of 4 (day 10): up to 20 emails today, set by your daily cap.");
+  });
+
   it("shows the Gmail warm-up progress and saves the warm-up, caps and hosting switches", async () => {
     const { user, mutations } = await unlocked();
     const gmail = card("gmail");

@@ -2286,6 +2286,7 @@
         "warmup": "Gmail 워밍업",
         "warmupHint": "새 계정이 스팸으로 표시되지 않도록 4주에 걸쳐 한도를 올립니다.",
         "warmupLine": "{{weeks}}주 중 {{week}}주차({{day}}일째): 오늘 최대 {{cap}}통, {{date}}부터 하루 {{next}}통.",
+        "warmupLineCapped": "{{weeks}}주 중 {{week}}주차({{day}}일째): 일일 한도에 따라 오늘 최대 {{cap}}통.",
         "warmupDone": "워밍업 완료: 하루 최대 {{cap}}통.",
         "warmupOff": "워밍업 꺼짐: 하루 최대 {{cap}}통.",
         "warmupNotStarted": "워밍업은 Gmail을 연결하면 시작됩니다."

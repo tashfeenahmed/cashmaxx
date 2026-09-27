@@ -199,7 +199,7 @@ function FieldInput({
           {t("cashmaxx.integrations.dialog.keepSecret")}
         </p>
       ) : null}
-      {error ? <p id={errorId} className="text-[12px] text-destructive">{error}</p> : null}
+      {error ? <p id={errorId} className="text-[12px] text-destructive dark:text-red-400">{error}</p> : null}
     </div>
   );
 }

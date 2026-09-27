@@ -2300,6 +2300,7 @@
         "warmup": "Aquecimento do Gmail",
         "warmupHint": "Aumenta o limite ao longo de quatro semanas para uma conta nova não ser marcada como spam.",
         "warmupLine": "Semana {{week}} de {{weeks}} (dia {{day}}): até {{cap}} e-mails hoje, {{next}}/dia a partir de {{date}}.",
+        "warmupLineCapped": "Semana {{week}} de {{weeks}} (dia {{day}}): até {{cap}} e-mails hoje, pelo seu limite diário.",
         "warmupDone": "Aquecimento concluído: até {{cap}} e-mails por dia.",
         "warmupOff": "Aquecimento desligado: até {{cap}} e-mails por dia.",
         "warmupNotStarted": "O aquecimento começa quando o Gmail é conectado."

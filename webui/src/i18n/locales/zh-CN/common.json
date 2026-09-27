@@ -2486,6 +2486,7 @@
         "warmup": "Gmail 预热",
         "warmupHint": "在四周内逐步提高上限，避免新账号被标记为垃圾邮件。",
         "warmupLine": "第 {{week}}/{{weeks}} 周（第 {{day}} 天）：今天最多 {{cap}} 封，自 {{date}} 起每天 {{next}} 封。",
+        "warmupLineCapped": "第 {{week}}/{{weeks}} 周(第 {{day}} 天):受每日上限限制,今天最多 {{cap}} 封邮件。",
         "warmupDone": "预热完成：每天最多 {{cap}} 封。",
         "warmupOff": "预热已关闭：每天最多 {{cap}} 封。",
         "warmupNotStarted": "连接 Gmail 后开始预热。"

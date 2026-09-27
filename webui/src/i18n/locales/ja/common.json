@@ -2286,6 +2286,7 @@
         "warmup": "Gmail のウォームアップ",
         "warmupHint": "新しいアカウントがスパム扱いされないよう、4 週間かけて上限を上げます。",
         "warmupLine": "{{weeks}} 週中 {{week}} 週目（{{day}} 日目）: 今日は最大 {{cap}} 通、{{date}} から {{next}} 通/日。",
+        "warmupLineCapped": "{{weeks}}週中{{week}}週目({{day}}日目):本日は1日の上限により最大{{cap}}通まで。",
         "warmupDone": "ウォームアップ完了: 1 日最大 {{cap}} 通。",
         "warmupOff": "ウォームアップはオフ: 1 日最大 {{cap}} 通。",
         "warmupNotStarted": "ウォームアップは Gmail を接続すると始まります。"

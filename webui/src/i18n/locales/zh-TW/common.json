@@ -2286,6 +2286,7 @@
         "warmup": "Gmail 暖機",
         "warmupHint": "在四週內逐步提高上限，避免新帳號被標記為垃圾郵件。",
         "warmupLine": "第 {{week}}/{{weeks}} 週（第 {{day}} 天）：今天最多 {{cap}} 封，自 {{date}} 起每天 {{next}} 封。",
+        "warmupLineCapped": "第 {{week}}/{{weeks}} 週(第 {{day}} 天):受每日上限限制,今天最多 {{cap}} 封郵件。",
         "warmupDone": "暖機完成：每天最多 {{cap}} 封。",
         "warmupOff": "暖機已關閉：每天最多 {{cap}} 封。",
         "warmupNotStarted": "連接 Gmail 後開始暖機。"

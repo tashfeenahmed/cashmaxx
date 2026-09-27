@@ -109,7 +109,7 @@ export function SignedAmount({
       className={cn(
         "tabular-nums",
         sign === "positive" && "text-emerald-700 dark:text-emerald-400",
-        sign === "negative" && "text-destructive",
+        sign === "negative" && "text-destructive dark:text-red-400",
         sign === "zero" && "text-muted-foreground",
         className,
       )}
@@ -172,10 +172,10 @@ export function CashmaxxErrorState({ error, onRetry }: { error: unknown; onRetry
   const { t } = useTranslation();
   if (isGuardUnavailable(error)) return <GuardUnavailable onRetry={onRetry} notConfigured={isNotConfigured(error)} />;
   return (
-    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-destructive/20 bg-destructive/5 px-4 py-3 text-[13px] text-destructive">
+    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-destructive/20 bg-destructive/5 px-4 py-3 text-[13px] text-destructive dark:text-red-400">
       <span className="min-w-0">{errorMessage(error, t)}</span>
       {onRetry ? (
-        <Button type="button" size="sm" variant="ghost" onClick={onRetry} className="h-8 rounded-full text-destructive">
+        <Button type="button" size="sm" variant="ghost" onClick={onRetry} className="h-8 rounded-full text-destructive dark:text-red-400">
           {t("cashmaxx.actions.retry")}
         </Button>
       ) : null}
@@ -190,7 +190,7 @@ export function InlineNotice({ tone, children }: { tone: "error" | "info"; child
       className={cn(
         "rounded-control border px-4 py-2.5 text-[13px]",
         tone === "error"
-          ? "border-destructive/20 bg-destructive/5 text-destructive"
+          ? "border-destructive/20 bg-destructive/5 text-destructive dark:text-red-400"
           : "border-border/55 bg-muted/35 text-muted-foreground",
       )}
     >

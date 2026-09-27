@@ -2286,6 +2286,7 @@
         "warmup": "Montée en charge Gmail",
         "warmupHint": "Augmente le plafond sur quatre semaines pour qu'un nouveau compte ne soit pas signalé comme spam.",
         "warmupLine": "Semaine {{week}} sur {{weeks}} (jour {{day}}) : jusqu'à {{cap}} e-mails aujourd'hui, {{next}}/jour à partir du {{date}}.",
+        "warmupLineCapped": "Semaine {{week}} sur {{weeks}} (jour {{day}}) : jusqu'à {{cap}} e-mails aujourd'hui, selon votre plafond quotidien.",
         "warmupDone": "Montée en charge terminée : jusqu'à {{cap}} e-mails par jour.",
         "warmupOff": "Montée en charge désactivée : jusqu'à {{cap}} e-mails par jour.",
         "warmupNotStarted": "La montée en charge commence quand Gmail est connecté."

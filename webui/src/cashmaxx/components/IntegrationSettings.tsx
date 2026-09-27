@@ -128,7 +128,7 @@ export function CapEditor({
           </Button>
         </div>
         {invalid ? (
-          <p id={`${inputId}-error`} className="text-[12px] text-destructive">
+          <p id={`${inputId}-error`} className="text-[12px] text-destructive dark:text-red-400">
             {t("cashmaxx.integrations.capRange", { min, max })}
           </p>
         ) : null}
@@ -184,6 +184,15 @@ function warmupLine(
     case "done":
       return t("cashmaxx.integrations.email.warmupDone", { cap: progress.cap });
     case "ramping":
+      if (progress.nextCap <= progress.cap) {
+        // The owner's daily cap is already the limit; the next ramp step changes nothing.
+        return t("cashmaxx.integrations.email.warmupLineCapped", {
+          week: progress.week,
+          weeks: WARMUP_WEEKS,
+          day: progress.day + 1,
+          cap: progress.cap,
+        });
+      }
       return t("cashmaxx.integrations.email.warmupLine", {
         week: progress.week,
         weeks: WARMUP_WEEKS,

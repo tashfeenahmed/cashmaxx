@@ -2486,6 +2486,7 @@
         "warmup": "Gmail warm-up",
         "warmupHint": "Raise the cap over four weeks so a new account is not flagged as spam.",
         "warmupLine": "Week {{week}} of {{weeks}} (day {{day}}): up to {{cap}} emails today, {{next}}/day from {{date}}.",
+        "warmupLineCapped": "Week {{week}} of {{weeks}} (day {{day}}): up to {{cap}} emails today, set by your daily cap.",
         "warmupDone": "Warm-up complete: up to {{cap}} emails a day.",
         "warmupOff": "Warm-up off: up to {{cap}} emails a day.",
         "warmupNotStarted": "The warm-up starts when Gmail is connected."

@@ -319,7 +319,7 @@ export function CashmaxxIntegrations({ connection }: { connection: CashmaxxConne
                       setNotice(null);
                       setRemoving(item);
                     }}
-                    className="rounded-full text-destructive hover:text-destructive">
+                    className="rounded-full text-destructive dark:text-red-400 hover:text-destructive dark:hover:text-red-300">
                     <Unplug className="mr-1.5 h-3.5 w-3.5" aria-hidden />
                     {t("cashmaxx.integrations.actions.disconnect")}
                     <span className="sr-only"> {item.label}</span>
@@ -415,7 +415,7 @@ export function IntegrationStatusBadge({ status }: { status: IntegrationStatus }
       className={cn(
         "inline-flex shrink-0 select-none items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-medium",
         status === "connected" && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-        status === "testFailed" && "bg-destructive/10 text-destructive",
+        status === "testFailed" && "bg-destructive/10 text-destructive dark:text-red-400",
         status === "notConnected" && "bg-muted text-muted-foreground",
       )}
     >
@@ -466,7 +466,7 @@ function IntegrationCard({
                   <time dateTime={lastTest.at} title={formatDateTime(lastTest.at, i18n.language)} className="tabular-nums">
                     {formatRelativeTime(lastTest.at, i18n.language)}
                   </time>
-                  {!lastTest.ok && lastTest.message ? <span className="text-destructive"> · {lastTest.message}</span> : null}
+                  {!lastTest.ok && lastTest.message ? <span className="text-destructive dark:text-red-400"> · {lastTest.message}</span> : null}
                 </>
               ) : t("cashmaxx.integrations.neverTested")}
             </p>

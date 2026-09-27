@@ -2286,6 +2286,7 @@
         "warmup": "Pemanasan Gmail",
         "warmupHint": "Naikkan batas selama empat minggu agar akun baru tidak ditandai sebagai spam.",
         "warmupLine": "Minggu {{week}} dari {{weeks}} (hari {{day}}): hingga {{cap}} email hari ini, {{next}}/hari mulai {{date}}.",
+        "warmupLineCapped": "Minggu {{week}} dari {{weeks}} (hari {{day}}): hingga {{cap}} email hari ini, sesuai batas harian Anda.",
         "warmupDone": "Pemanasan selesai: hingga {{cap}} email per hari.",
         "warmupOff": "Pemanasan mati: hingga {{cap}} email per hari.",
         "warmupNotStarted": "Pemanasan dimulai saat Gmail terhubung."

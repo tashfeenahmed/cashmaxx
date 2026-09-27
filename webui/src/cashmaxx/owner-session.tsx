@@ -228,7 +228,7 @@ function OwnerPinDialog({
             className="mt-1.5 h-10 text-[14px] tracking-[0.2em]"
           />
           {error ? (
-            <p id="cashmaxx-owner-pin-error" role="alert" className="mt-2 text-[12.5px] text-destructive">
+            <p id="cashmaxx-owner-pin-error" role="alert" className="mt-2 text-[12.5px] text-destructive dark:text-red-400">
               {error}
             </p>
           ) : null}

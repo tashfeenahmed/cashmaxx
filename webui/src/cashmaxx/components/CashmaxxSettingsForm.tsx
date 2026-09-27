@@ -274,7 +274,7 @@ function FieldShell({ id, error, children }: { id: string; error?: string; child
     <div className="flex w-full flex-col items-stretch gap-1 sm:items-end">
       {children}
       {error ? (
-        <p id={`cashmaxx-${id}-error`} className="text-[12px] text-destructive sm:text-right">{error}</p>
+        <p id={`cashmaxx-${id}-error`} className="text-[12px] text-destructive dark:text-red-400 sm:text-right">{error}</p>
       ) : null}
     </div>
   );
@@ -469,7 +469,7 @@ function AllowlistEditor({
         </Button>
       </div>
       {draftError || error ? (
-        <p id="cashmaxx-allowlist-draft-error" role="alert" className="mt-2 text-[12px] text-destructive">
+        <p id="cashmaxx-allowlist-draft-error" role="alert" className="mt-2 text-[12px] text-destructive dark:text-red-400">
           {draftError ?? error}
         </p>
       ) : null}
