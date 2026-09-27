@@ -371,8 +371,9 @@ def apply_exec_sandbox(config: Config) -> None:
     if exec_cfg.sandbox == "seatbelt" and HOMEBREW_PREFIX.is_dir():
         if str(HOMEBREW_PREFIX) not in exec_cfg.sandbox_ro_binds:
             exec_cfg.sandbox_ro_binds.append(str(HOMEBREW_PREFIX))
-        if not exec_cfg.path_append:
-            exec_cfg.path_append = str(HOMEBREW_PREFIX / "bin")
+        # First on PATH: macOS's own python3 is 3.9, too old for x402 and most current packages.
+        if not exec_cfg.path_prepend:
+            exec_cfg.path_prepend = str(HOMEBREW_PREFIX / "bin")
 
 
 def parse_model_ids(payload: object) -> list[str]:

@@ -32,8 +32,10 @@ Price per call: $0.001 to $0.05 is normal.
 Work in `apis/<slug>/`. Create a virtualenv there (the gateway's own environment is off-limits):
 
 ```bash
-cd apis/<slug> && python -m venv .venv && . .venv/bin/activate
+python3 --version                     # needs 3.10+; if older, use python3.12 or python3.14 instead
+cd apis/<slug> && python3 -m venv .venv && . .venv/bin/activate
 pip install "x402[fastapi]" uvicorn
+# To start the venv over, run `python3 -m venv --clear .venv`. The shell blocks `rm -r`/`rm -rf`.
 ```
 
 `app.py`:

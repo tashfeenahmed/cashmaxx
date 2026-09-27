@@ -179,3 +179,9 @@ def test_reset_heartbeat_session_never_raises() -> None:
     from cashmaxx.plugin import reset_heartbeat_session
 
     reset_heartbeat_session(SimpleNamespace(), "heartbeat")  # no sessions attribute: logged, ignored
+
+
+def test_heartbeat_writes_the_plan_first_and_does_not_loop() -> None:
+    block = ws.render_heartbeat_block(_settings())
+    assert "write it down first, before doing any work on it" in block
+    assert "fails the same way twice, stop retrying" in block

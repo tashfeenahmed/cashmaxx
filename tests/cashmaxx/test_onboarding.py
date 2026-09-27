@@ -410,6 +410,8 @@ def test_apply_nanobot_config_turns_on_the_exec_sandbox(monkeypatch: pytest.Monk
     config = Config()
     ob.apply_nanobot_config(config, _answers())
     assert config.tools.exec.sandbox == "seatbelt"
+    if ob.HOMEBREW_PREFIX.is_dir():  # Homebrew first, so python3 isn't macOS's 3.9
+        assert config.tools.exec.path_prepend == str(ob.HOMEBREW_PREFIX / "bin")
 
     chosen = Config()
     chosen.tools.exec.sandbox = "bwrap"
