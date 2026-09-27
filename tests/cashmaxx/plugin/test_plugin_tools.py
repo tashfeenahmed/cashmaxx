@@ -122,6 +122,7 @@ async def test_wallet(fake_guard: FakeGuard) -> None:
     result = await t.WalletTool().execute()
     assert "0xabc" in result and "12.50" in result and "40.00" in result
     assert "This is your own wallet" in result and "Never create or import another wallet" in result
+    assert result.startswith("Now: ") and " UTC (" in result.splitlines()[0]
     fake_guard.down = True
     assert await t.WalletTool().execute() == t.GUARD_DOWN
 

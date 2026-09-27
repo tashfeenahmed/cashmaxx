@@ -108,6 +108,12 @@ def agent_view_of_settings(res: JSON) -> JSON:
     return {**res, "settings": view}
 
 
+def now_line() -> str:
+    """nanobot doesn't give the model today's date; the money loop needs it for logs and deadlines."""
+    now = datetime.now(timezone.utc)
+    return f"Now: {now:%Y-%m-%d %H:%M} UTC ({now:%A}). Use this date in logs and deadlines."
+
+
 def _compact(data: JSON) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"), default=str)
 
@@ -187,6 +193,7 @@ class WalletTool(_CashmaxxTool):
             where = (f"{network}: real customers can't pay this wallet until the owner switches to "
                      "mainnet, so keep doing the free work (research, vetting, building) meanwhile")
         return (
+            f"{now_line()}\n"
             f"Address: {res.get('address')} ({network})\n"
             f"Balance: {res.get('balance_usdc')} USDC\n"
             f"Available budget: {res.get('available_budget_usd')} USD\n"
@@ -395,7 +402,8 @@ class LedgerTool(_CashmaxxTool):
             "net": res.get("net"),
             "by_category": res.get("by_category"),
         }
-        return _compact(summary) + "\nrecent: " + _compact({"entries": recent})
+        return (f"{now_line()}\n" + _compact(summary) + "\nrecent: "
+                + _compact({"entries": recent}))
 
 
 @tool_parameters(
