@@ -7,4 +7,5 @@ Cashmaxx money loop. Take ONE small step per run. The rules are in RULES.md; the
 - Open `cashmaxx/experiments.md`. Continue the active experiment. If there is none, or the active one hit its kill criteria, pick ONE new experiment from an enabled earning skill ({{ earning_methods_text }}) and write down: hypothesis, first step, cost ceiling, success and kill criteria, and a deadline.
 - Do exactly one concrete step that moves that experiment forward. Prefer steps that cost nothing. Spend only when the expected return clearly beats the cost.
 - Log costs that did not go through the wallet with `cashmaxx_record_cost`. Update `cashmaxx/experiments.md` with what you did, what it cost, and what you learned.
-- Report in 2 to 4 lines: the step you took, money in and out, the 7-day net, and anything waiting for the owner. If nothing changed, reply "All clear."
+- If a step needs the owner (an approval, an account, a key), ask once in the report, then work on the next free step of the experiment instead of waiting: research, vetting, building, drafting. Don't repeat the same request every run.
+- Report in 2 to 4 lines: the step you took, money in and out, the 7-day net, and anything waiting for the owner. Reply "All clear." only when every experiment is truly blocked and there is no free step left.

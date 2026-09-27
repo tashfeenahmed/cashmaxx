@@ -2163,6 +2163,103 @@ def test_heartbeat_empty_response_is_not_evaluated(
     assert response is None
 
 
+def _run_heartbeat_without_sessions(monkeypatch, tmp_path: Path, *, cashmaxx: bool):
+    """Gateway heartbeat with no chat sessions at all; returns (response, process_direct calls, delivered)."""
+    from cashmaxx.config import CashmaxxAgentConfig
+
+    config_file = _write_instance_config(tmp_path)
+    config = Config()
+    config.agents.defaults.workspace = str(tmp_path / "workspace")
+    config.workspace_path.mkdir(parents=True)
+    (config.workspace_path / "HEARTBEAT.md").write_text(
+        "## Active Tasks\n\n- Run the money loop\n", encoding="utf-8",
+    )
+    if cashmaxx:
+        config.cashmaxx = CashmaxxAgentConfig(agent_token="tok")
+    provider = _fake_provider()
+    bus = MagicMock()
+    bus.publish_outbound = AsyncMock()
+    seen: dict[str, object] = {}
+    calls: list[dict[str, object]] = []
+
+    class _FakeSessionManager:
+        def __init__(self, _workspace: Path) -> None:
+            pass
+
+        def list_sessions(self) -> list[dict[str, str]]:
+            return []
+
+    class _FakeCron:
+        def __init__(self, _store_path: Path) -> None:
+            self.on_job = None
+            seen["cron"] = self
+
+        def status(self) -> dict[str, int]:
+            return {"jobs": 0}
+
+        def register_system_job(self, _job: CronJob) -> None:
+            raise _StopGatewayError("stop")
+
+    class _FakeAgentLoop(_GatewayAgentContractStub):
+        @classmethod
+        def from_config(cls, config, bus=None, **extra):
+            return cls(**extra)
+
+        def __init__(self, *args, **kwargs) -> None:
+            self.model = "test-model"
+            self.provider = kwargs.get("provider", object())
+            self.sessions = kwargs["session_manager"]
+            self.tools = {}
+
+        async def process_direct(self, *_args, **kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(content="Checked the wallet; next step logged.")
+
+        async def aclose(self) -> None:
+            return None
+
+        async def run(self) -> None:
+            return None
+
+        def stop(self) -> None:
+            return None
+
+    class _FakeChannelManager:
+        def __init__(self, *_args, **_kwargs) -> None:
+            self.enabled_channels = ["websocket"]
+
+    async def _notify(*_args, **_kwargs) -> bool:
+        return True
+
+    _patch_cli_command_runtime(
+        monkeypatch, config,
+        make_provider=lambda _config: provider, message_bus=lambda: bus,
+        session_manager=_FakeSessionManager, cron_service=_FakeCron,
+    )
+    monkeypatch.setattr("nanobot.cli.gateway_runtime.AgentLoop", _FakeAgentLoop)
+    monkeypatch.setattr("nanobot.channels.manager.ChannelManager", _FakeChannelManager)
+    monkeypatch.setattr("nanobot.cli.gateway_runtime.read_webui_sidebar_state", lambda: {})
+    monkeypatch.setattr("nanobot.cli.gateway_runtime.evaluate_response", _notify)
+
+    result = runner.invoke(app, ["gateway", "--config", str(config_file)])
+    assert isinstance(result.exception, _StopGatewayError)
+    cron = seen["cron"]
+    response = asyncio.run(cron.on_job(CronJob(id="heartbeat", name="heartbeat")))
+    return response, calls, bus.publish_outbound.await_count
+
+
+def test_heartbeat_without_a_chat_is_skipped_for_plain_nanobot(monkeypatch, tmp_path: Path) -> None:
+    response, calls, delivered = _run_heartbeat_without_sessions(monkeypatch, tmp_path, cashmaxx=False)
+    assert response is None and calls == [] and delivered == 0
+
+
+def test_heartbeat_without_a_chat_still_runs_the_cashmaxx_loop(monkeypatch, tmp_path: Path) -> None:
+    response, calls, delivered = _run_heartbeat_without_sessions(monkeypatch, tmp_path, cashmaxx=True)
+    assert response == "Checked the wallet; next step logged."
+    assert len(calls) == 1 and calls[0]["channel"] == "cli"
+    assert delivered == 0  # nothing to deliver to; the report stays in the heartbeat session
+
+
 def test_webui_yes_creates_config_and_enables_local_websocket(
     monkeypatch,
     tmp_path: Path,

@@ -132,3 +132,20 @@ def test_rules_render_every_compute_mode() -> None:
     }
     texts = {ws.render_rules(_settings(computePaymentMode=m, **extra)) for m, extra in modes.items()}
     assert len(texts) == 4
+
+
+@pytest.mark.parametrize("network", ["fake", "base-sepolia", "base"])
+def test_rules_explain_where_money_arrives(network: str) -> None:
+    rules = ws.render_rules(_settings(network=network))
+    assert "I get paid at the address from `cashmaxx_wallet`" in rules
+    assert "I never need it to earn" in rules  # ownerWallet is not a prerequisite
+    if network == "base":
+        assert "payouts to my address are real USDC" in rules
+    else:
+        assert "I don't wait for the network to change" in rules
+
+
+def test_heartbeat_does_the_next_free_step_instead_of_idling() -> None:
+    block = ws.render_heartbeat_block(_settings())
+    assert "work on the next free step" in block
+    assert 'Reply "All clear." only when every experiment is truly blocked' in block

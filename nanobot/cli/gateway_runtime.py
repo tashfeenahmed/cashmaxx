@@ -635,7 +635,9 @@ def _run_gateway(
                 return None
 
             channel, chat_id = _pick_heartbeat_target()
-            if channel == "cli":
+            # cashmaxx: the money loop runs even before the owner opens a chat; its report then
+            # stays in the heartbeat session instead of being delivered.
+            if channel == "cli" and getattr(config, "cashmaxx", None) is None:
                 return None
 
             prompt = (
@@ -679,7 +681,9 @@ def _run_gateway(
                     default_notify=False,
                 )
 
-            if should_notify:
+            if should_notify and channel == "cli":  # cashmaxx: no chat to deliver to yet
+                logger.info("Heartbeat: completed; no chat to report to, kept in the heartbeat session")
+            elif should_notify:
                 logger.info("Heartbeat: completed, delivering response")
                 await _deliver_to_channel(
                     OutboundMessage(channel=channel, chat_id=chat_id, content=response),
