@@ -34,7 +34,7 @@ Work in `apis/<slug>/`. Create a virtualenv there (the gateway's own environment
 ```bash
 python3 --version                     # needs 3.10+; if older, use python3.12 or python3.14 instead
 cd apis/<slug> && python3 -m venv .venv && . .venv/bin/activate
-pip install "x402[fastapi]" uvicorn
+pip install "x402[fastapi,evm]" uvicorn
 # To start the venv over, run `python3 -m venv --clear .venv`. The shell blocks `rm -r`/`rm -rf`.
 ```
 
@@ -82,7 +82,17 @@ Run it: `PAY_TO=0x... uvicorn app:app --port 8402`.
 
 ## Test before announcing
 
-1. `curl -i localhost:8402/v1/example` should return `402` with the payment requirements.
+1. Check the paywall in-process. The shell can't reach `localhost`, and it rejects commands that
+   contain URL paths such as `'/health'`, so put the check in a file, `selftest.py`, next to `app.py`:
+   ```python
+   from fastapi.testclient import TestClient
+
+   from app import app
+
+   client = TestClient(app)
+   print("health", client.get("/health").status_code, "paid", client.get("/v1/example").status_code)
+   ```
+   Run `PAY_TO=<your address> .venv/bin/python selftest.py` and expect `health 200 paid 402`.
 2. On Base Sepolia (testnet), pay your own endpoint once with
    `cashmaxx_x402_fetch(url=..., max_usd="0.02", purpose="self-test")`. The call and the payment
    should both succeed, and the ledger should show the payment out and, once settled, the income.

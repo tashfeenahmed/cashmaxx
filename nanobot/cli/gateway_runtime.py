@@ -1,6 +1,7 @@
 """Foreground gateway runtime and lifecycle helpers."""
 
 import asyncio
+import contextlib
 import signal
 from collections.abc import Awaitable, Callable, Coroutine, Iterable
 from contextlib import suppress
@@ -650,19 +651,22 @@ def _run_gateway(
             suppress_token = None
             if isinstance(message_tool, MessageTool):
                 suppress_token = message_tool.set_suppress_delivery(True)
-            if getattr(config, "cashmaxx", None) is not None:  # cashmaxx: fresh context per run
-                from cashmaxx.plugin import reset_heartbeat_session
+            turn_budget: contextlib.AbstractContextManager[None] = contextlib.nullcontext()
+            if getattr(config, "cashmaxx", None) is not None:  # cashmaxx: fresh context, capped run
+                from cashmaxx.plugin import heartbeat_turn_budget, reset_heartbeat_session
 
                 reset_heartbeat_session(agent, HEARTBEAT_SESSION_KEY)
+                turn_budget = heartbeat_turn_budget(agent, config)
             try:
                 await mcp_provider.connect()
-                resp = await agent.process_direct(
-                    prompt,
-                    session_key=HEARTBEAT_SESSION_KEY,
-                    channel=channel,
-                    chat_id=chat_id,
-                    on_progress=_silent,
-                )
+                with turn_budget:
+                    resp = await agent.process_direct(
+                        prompt,
+                        session_key=HEARTBEAT_SESSION_KEY,
+                        channel=channel,
+                        chat_id=chat_id,
+                        on_progress=_silent,
+                    )
             finally:
                 if isinstance(message_tool, MessageTool) and suppress_token is not None:
                     message_tool.reset_suppress_delivery(suppress_token)

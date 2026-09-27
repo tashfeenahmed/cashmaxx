@@ -185,3 +185,21 @@ def test_heartbeat_writes_the_plan_first_and_does_not_loop() -> None:
     block = ws.render_heartbeat_block(_settings())
     assert "write it down first, before doing any work on it" in block
     assert "fails the same way twice, stop retrying" in block
+
+
+def test_heartbeat_turn_budget_caps_then_restores() -> None:
+    from types import SimpleNamespace
+
+    from cashmaxx.config import CashmaxxAgentConfig
+    from cashmaxx.plugin import heartbeat_turn_budget
+
+    agent = SimpleNamespace(max_iterations=200)
+    config = SimpleNamespace(cashmaxx=CashmaxxAgentConfig(heartbeat_max_iterations=12))
+    with heartbeat_turn_budget(agent, config):
+        assert agent.max_iterations == 12
+    assert agent.max_iterations == 200
+    with heartbeat_turn_budget(SimpleNamespace(max_iterations=5), config):
+        pass  # never raises the agent's own, lower limit
+    plain = SimpleNamespace(max_iterations=200)
+    with heartbeat_turn_budget(plain, SimpleNamespace(cashmaxx=None)):
+        assert plain.max_iterations == 200

@@ -163,6 +163,8 @@ class CashmaxxAgentConfig(Base):
     guard_url: str = f"http://127.0.0.1:{DEFAULT_GUARD_PORT}"
     agent_token: str = ""
     request_timeout_s: float = Field(default=20.0, gt=0, le=300)
+    # Tool rounds per money-loop heartbeat ("one small step"). Chats keep nanobot's own limit.
+    heartbeat_max_iterations: int = Field(default=20, ge=3, le=200)
 
 
 def load_guard_config(path: Path | None = None) -> GuardConfig:

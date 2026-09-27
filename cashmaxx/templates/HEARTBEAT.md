@@ -1,6 +1,6 @@
 ## Active Tasks
 
-Cashmaxx money loop. Take ONE small step per run. The rules are in RULES.md; the method is in the cashmaxx-core skill.
+Cashmaxx money loop. Take ONE small step per run. Each run has a limited number of tool rounds and then must report, so update `cashmaxx/experiments.md` as you go. The rules are in RULES.md; the method is in the cashmaxx-core skill.
 
 - Check the state: call `cashmaxx_ledger` (window 7d) and `cashmaxx_wallet`. Their first line is today's date; use it for every log entry and deadline. If the guard is unreachable or Cashmaxx is frozen, do no money work: say so in one line and stop.
 - If an earlier run left a payment pending, check it with `cashmaxx_payment_status`. Never send it again.

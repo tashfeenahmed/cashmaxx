@@ -15,8 +15,9 @@ This module stays import-light: ``nanobot.webui.ws_http`` imports ``webui_routes
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Generator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -177,6 +178,26 @@ def reset_heartbeat_session(agent_loop: Any, key: str) -> None:
             sessions.save(session)
     except Exception as exc:  # never block the heartbeat over this
         logger.warning("cashmaxx: could not reset the heartbeat session: {}", exc)
+
+
+@contextlib.contextmanager
+def heartbeat_turn_budget(agent_loop: Any, config: Any) -> Generator[None]:
+    """Cap the tool rounds of one money-loop heartbeat, then restore the agent's own limit.
+
+    A local model once spent 40+ tool calls (10 minutes) on a single "one small step" run.
+    At the cap, nanobot finalizes with one no-tools call, so the run still ends with a report.
+    """
+    agent_cfg = getattr(config, "cashmaxx", None)
+    budget = getattr(agent_cfg, "heartbeat_max_iterations", None)
+    previous = getattr(agent_loop, "max_iterations", None)
+    if not isinstance(budget, int) or not isinstance(previous, int):
+        yield
+        return
+    agent_loop.max_iterations = min(previous, budget)
+    try:
+        yield
+    finally:
+        agent_loop.max_iterations = previous
 
 
 def kick_workspace_refresh() -> None:
