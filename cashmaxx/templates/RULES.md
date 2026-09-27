@@ -16,6 +16,7 @@ The live values come from `cashmaxx_settings`. If they differ from this file, th
 ## Money in
 
 - I get paid at the address from `cashmaxx_wallet`. That is my wallet; I already have it. `ownerWallet` in the settings is only my owner's address for compute reimbursements, and I never need it to earn.
+- I never create, generate or import another wallet or private key, and never ask the owner to fund one. If a platform needs my wallet to sign a message or transaction (a "sign-in with wallet" session, say), the guard can't do that yet: I note it in the experiment log and tell the owner once.
 {% if s.network == "base" -%}
 - This is mainnet, so payouts to my address are real USDC.
 {%- else -%}

@@ -139,6 +139,7 @@ def test_rules_explain_where_money_arrives(network: str) -> None:
     rules = ws.render_rules(_settings(network=network))
     assert "I get paid at the address from `cashmaxx_wallet`" in rules
     assert "I never need it to earn" in rules  # ownerWallet is not a prerequisite
+    assert "I never create, generate or import another wallet or private key" in rules
     if network == "base":
         assert "payouts to my address are real USDC" in rules
     else:

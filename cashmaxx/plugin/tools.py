@@ -156,10 +156,18 @@ class WalletTool(_CashmaxxTool):
         res = await self._call(lambda c: c.wallet())
         if isinstance(res, ToolResult):
             return res
+        network = str(res.get("network"))
+        if network == "base":
+            where = "mainnet: payouts to this address are real USDC"
+        else:
+            where = (f"{network}: real customers can't pay this wallet until the owner switches to "
+                     "mainnet, so keep doing the free work (research, vetting, building) meanwhile")
         return (
-            f"Address: {res.get('address')} ({res.get('network')})\n"
+            f"Address: {res.get('address')} ({network})\n"
             f"Balance: {res.get('balance_usdc')} USDC\n"
-            f"Available budget: {res.get('available_budget_usd')} USD"
+            f"Available budget: {res.get('available_budget_usd')} USD\n"
+            "This is your own wallet, held by the guard: get paid at this address. Never create or "
+            f"import another wallet or private key. Network {where}."
         )
 
 
@@ -467,7 +475,10 @@ class SettingsTool(_CashmaxxTool):
         res = await self._call(lambda c: c.settings())
         if isinstance(res, ToolResult):
             return res
-        return _compact(res)
+        return _compact(res) + (
+            "\nNote: ownerWallet is only the owner's address for compute reimbursements. You don't "
+            "need it to earn; income goes to your own address from cashmaxx_wallet."
+        )
 
 
 @tool_parameters(
