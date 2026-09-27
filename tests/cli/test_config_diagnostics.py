@@ -25,6 +25,11 @@ def _without_rendered_line_breaks(output: str) -> str:
     return "".join(output.splitlines())
 
 
+def _has_setup_route(output: str) -> bool:
+    """Rich drops the space where it wraps, so match "Settings → Models" ignoring whitespace."""
+    return "Settings→Models" in "".join(output.split())
+
+
 def _write_ready_config(config_path, *, channels: dict | None = None) -> None:
     config_path.write_text(
         json.dumps(
@@ -129,7 +134,7 @@ def test_status_reports_missing_key_for_anthropic_backends(
     assert f"{label}: not set" in output
     assert "provider/model configuration is ready" not in output
     assert 'Next: nanobot agent -m "Hello!"' not in output
-    assert "Settings → Models" in output
+    assert _has_setup_route(output)
 
 
 @pytest.mark.parametrize(
@@ -174,7 +179,7 @@ def test_status_reports_missing_provider_with_shortest_setup_routes(tmp_path) ->
     assert result.exit_code == 0
     assert "Agent: ✗" in result.stdout
     assert "No provider is configured for model" in result.stdout
-    assert "Settings → Models" in _without_rendered_line_breaks(result.stdout)
+    assert _has_setup_route(result.stdout)
     assert "nanobot onboard --wizard" in result.stdout
     assert "nanobot status --config" in result.stdout
 
@@ -296,7 +301,7 @@ def test_agent_provider_setup_failure_points_to_shortest_routes(tmp_path) -> Non
 
     assert result.exit_code == 1
     assert "Agent cannot start: No provider is configured for model" in output
-    assert "Settings → Models" in output
+    assert _has_setup_route(output)
     assert "nanobot onboard --wizard" in output
     assert "nanobot status --config" in output
     assert "Traceback" not in output
@@ -339,7 +344,7 @@ def test_gateway_provider_setup_failure_points_to_shortest_routes_when_webui_dis
 
     assert result.exit_code == 1
     assert "Gateway cannot start: No provider is configured for model" in output
-    assert "Settings → Models" in output
+    assert _has_setup_route(output)
     assert "nanobot onboard --wizard" in output
     assert "nanobot status --config" in output
     assert config_path.name in output

@@ -210,7 +210,7 @@ The agent pays for its own compute from the budget: OpenRouter spend is recorded
 
 ## 🚀 Quick start
 
-**Requirements:** Python 3.11+ ([uv](https://docs.astral.sh/uv/) recommended), [Bun](https://bun.sh) or Node.js for the WebUI build, and an [OpenRouter](https://openrouter.ai/settings/keys) key. Optional: [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) for public hosting.
+**Requirements:** macOS or Linux, Python 3.11+ ([uv](https://docs.astral.sh/uv/) recommended), [Bun](https://bun.sh) or Node.js for the WebUI build, and an [OpenRouter](https://openrouter.ai/settings/keys) key. Optional: [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) for public hosting.
 
 ```bash
 # 1. Get the code and install (Python package + the Cashmaxx extra)

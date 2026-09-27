@@ -12,6 +12,9 @@ import certifi
 import pytest
 from loguru import logger
 
+# cashmaxx: the guard and its tests target macOS and Linux (POSIX file modes, OS sandboxes).
+collect_ignore_glob = ["tests/cashmaxx/*"] if sys.platform == "win32" else []
+
 
 @pytest.fixture(autouse=True)
 def _isolate_nanobot_log_activation() -> Iterator[None]:

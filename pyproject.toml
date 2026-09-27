@@ -84,6 +84,9 @@ documents = [
 cashmaxx = [
     "aiohttp>=3.9.0,<4.0.0",
     "cdp-sdk>=1.46.0,<2.0.0",
+    # cdp-sdk pulls in solana; solana>=0.40.2 needs websockets>=16, but Feishu's lark-oapi
+    # needs websockets<16. Stay below 0.40.2 so all extras and channels install together.
+    "solana>=0.36.6,<0.40.2",
     "x402>=2.20.0,<3.0.0",
     "stripe>=12.0.0,<16.0.0",
 ]
