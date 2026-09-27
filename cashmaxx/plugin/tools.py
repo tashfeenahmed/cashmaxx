@@ -188,10 +188,10 @@ class WalletTool(_CashmaxxTool):
             return res
         network = str(res.get("network"))
         if network == "base":
-            where = "mainnet: payouts to this address are real USDC"
+            where = "base (Base mainnet): payouts to this address are real USDC on Base"
         else:
             where = (f"{network}: real customers can't pay this wallet until the owner switches to "
-                     "mainnet, so keep doing the free work (research, vetting, building) meanwhile")
+                     "Base mainnet (network base, not Ethereum), so keep doing the free work (research, vetting, building) meanwhile")
         return (
             f"{now_line()}\n"
             f"Address: {res.get('address')} ({network})\n"
