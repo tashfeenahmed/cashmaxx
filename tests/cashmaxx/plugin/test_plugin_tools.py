@@ -219,6 +219,19 @@ async def test_settings(fake_guard: FakeGuard) -> None:
     assert await t.SettingsTool().execute() == t.GUARD_DOWN
 
 
+def test_agent_view_hides_fields_of_other_compute_modes() -> None:
+    base = {"network": "fake", "ownerWallet": None, "reimburseIntervalHours": 24,
+            "ownerTopupThresholdUsd": "2", "x402GatewayUrl": None}
+    virtual = t.agent_view_of_settings({"settings": {**base, "computePaymentMode": "virtual"}})
+    assert set(virtual["settings"]) == {"network", "computePaymentMode"}
+    reimburse = t.agent_view_of_settings(
+        {"settings": {**base, "computePaymentMode": "reimburse", "ownerWallet": "0xabc"}})
+    assert reimburse["settings"]["ownerWallet"] == "0xabc"
+    assert "x402GatewayUrl" not in reimburse["settings"]
+    gateway = t.agent_view_of_settings({"settings": {**base, "computePaymentMode": "x402_gateway"}})
+    assert "x402GatewayUrl" in gateway["settings"] and "ownerWallet" not in gateway["settings"]
+
+
 async def test_freeze(fake_guard: FakeGuard) -> None:
     assert "frozen" in await t.FreezeTool().execute(reason="odd payment")
     assert fake_guard.last_json() == {"reason": "odd payment"}

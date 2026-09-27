@@ -84,6 +84,30 @@ def _money(value: Any) -> Decimal:
     return amount
 
 
+# Compute-payment fields that only matter in one mode. Shown to the model otherwise (as null),
+# they read like missing requirements: a local-model run kept asking the owner to "connect a
+# wallet" because ownerWallet was null, and to set x402GatewayUrl for an unrelated API.
+_MODE_ONLY_FIELDS: dict[str, tuple[str, ...]] = {
+    "reimburse": ("ownerWallet", "reimburseIntervalHours"),
+    "owner_topup": ("ownerTopupThresholdUsd",),
+    "x402_gateway": ("x402GatewayUrl",),
+}
+
+
+def agent_view_of_settings(res: JSON) -> JSON:
+    """The settings as the agent should read them: fields for other compute modes left out."""
+    settings = res.get("settings")
+    if not isinstance(settings, dict):
+        return res
+    view = dict(cast(dict[str, Any], settings))
+    mode = view.get("computePaymentMode")
+    for owner_mode, fields in _MODE_ONLY_FIELDS.items():
+        if owner_mode != mode:
+            for name in fields:
+                view.pop(name, None)
+    return {**res, "settings": view}
+
+
 def _compact(data: JSON) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"), default=str)
 
@@ -475,10 +499,7 @@ class SettingsTool(_CashmaxxTool):
         res = await self._call(lambda c: c.settings())
         if isinstance(res, ToolResult):
             return res
-        return _compact(res) + (
-            "\nNote: ownerWallet is only the owner's address for compute reimbursements. You don't "
-            "need it to earn; income goes to your own address from cashmaxx_wallet."
-        )
+        return _compact(agent_view_of_settings(res))
 
 
 @tool_parameters(
