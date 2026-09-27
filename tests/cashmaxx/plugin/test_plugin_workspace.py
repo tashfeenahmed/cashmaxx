@@ -150,3 +150,32 @@ def test_heartbeat_does_the_next_free_step_instead_of_idling() -> None:
     block = ws.render_heartbeat_block(_settings())
     assert "work on the next free step" in block
     assert 'Reply "All clear." only when every experiment is truly blocked' in block
+
+
+def test_heartbeat_asks_for_honest_reports_and_a_second_experiment() -> None:
+    block = ws.render_heartbeat_block(_settings())
+    assert "start a second one (at most two active)" in block
+    assert "Report only what you did in this run" in block
+
+
+def test_reset_heartbeat_session_clears_history(workspace: Path) -> None:
+    from types import SimpleNamespace
+
+    from cashmaxx.plugin import reset_heartbeat_session
+    from nanobot.session.manager import SessionManager
+
+    sessions = SessionManager(workspace)
+    session = sessions.get_or_create("heartbeat")
+    session.add_message("assistant", "Waiting on you to connect a wallet.")
+    sessions.save(session)
+    reset_heartbeat_session(SimpleNamespace(sessions=sessions), "heartbeat")
+    sessions.invalidate("heartbeat")
+    assert sessions.get_or_create("heartbeat").messages == []
+
+
+def test_reset_heartbeat_session_never_raises() -> None:
+    from types import SimpleNamespace
+
+    from cashmaxx.plugin import reset_heartbeat_session
+
+    reset_heartbeat_session(SimpleNamespace(), "heartbeat")  # no sessions attribute: logged, ignored

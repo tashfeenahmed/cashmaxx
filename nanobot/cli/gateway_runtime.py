@@ -650,6 +650,10 @@ def _run_gateway(
             suppress_token = None
             if isinstance(message_tool, MessageTool):
                 suppress_token = message_tool.set_suppress_delivery(True)
+            if getattr(config, "cashmaxx", None) is not None:  # cashmaxx: fresh context per run
+                from cashmaxx.plugin import reset_heartbeat_session
+
+                reset_heartbeat_session(agent, HEARTBEAT_SESSION_KEY)
             try:
                 await mcp_provider.connect()
                 resp = await agent.process_direct(

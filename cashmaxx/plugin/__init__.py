@@ -162,6 +162,23 @@ def _find_mcp_reload(agent_loop: Any) -> Callable[[], Awaitable[dict[str, Any]]]
     return None
 
 
+def reset_heartbeat_session(agent_loop: Any, key: str) -> None:
+    """Start each money-loop heartbeat with an empty context.
+
+    The loop's state lives in the ledger and ``cashmaxx/experiments.md``, which every run reads.
+    Carrying old heartbeat replies forward made the model repeat stale beliefs and even re-report
+    steps it did not take this run. The previous run's transcript stays until the next run.
+    """
+    try:
+        sessions = agent_loop.sessions
+        session = sessions.get_or_create(key)
+        if session.messages:
+            session.clear()
+            sessions.save(session)
+    except Exception as exc:  # never block the heartbeat over this
+        logger.warning("cashmaxx: could not reset the heartbeat session: {}", exc)
+
+
 def kick_workspace_refresh() -> None:
     """Run a pending workspace refresh in the background, if one is due and a loop is running.
 
