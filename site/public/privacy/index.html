@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <title>Privacy policy — Cashmaxx</title>
+  <meta name="description" content="How Cashmaxx and this website handle data. Cashmaxx is self-hosted: your agent, keys, and ledger stay on your machine.">
+  <link rel="canonical" href="https://cashmaxx.neu.so/privacy/">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="header wrap">
+    <a class="brand" href="/" aria-label="Cashmaxx home"><img src="/favicon.svg" width="32" height="32" alt="">Cashmaxx</a>
+    <nav aria-label="Main navigation">
+      <a class="hide-sm" href="/#how">How it works</a>
+      <a class="hide-sm" href="/#start">Quick start</a>
+      <a class="gh" href="https://github.com/tashfeenahmed/cashmaxx">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main" class="legal wrap">
+    <div class="legal-card">
+      <p class="eyebrow">Cashmaxx</p>
+      <h1>Privacy policy</h1>
+      <p class="lead">Your agent runs on your machine, not ours.</p>
+      <p class="date">Last updated: 29 September 2026</p>
+
+      <p class="summary">Cashmaxx is open-source software you install and run yourself. We don't operate a Cashmaxx service, and we don't receive your keys, wallet, ledger, conversations, or anything your agent does. The services you connect it to handle your data under their own policies.</p>
+
+      <h2>Who we are</h2>
+      <p>Cashmaxx and this website are provided by Neu Software LLC, a company registered in Delaware, United States. Cashmaxx is built on <a href="https://github.com/HKUDS/nanobot">nanobot</a>, an open-source project by its own authors. For privacy questions, email <a href="mailto:cashmaxx@neu.so">cashmaxx@neu.so</a>.</p>
+
+      <h2>The software you run</h2>
+      <p>When you install Cashmaxx, the agent, the guard, and the WebUI run on your own computer or server. Your settings and secrets are stored there, in files such as <code>~/.cashmaxx/guard.json</code>, <code>~/.cashmaxx/guard.sqlite3</code>, and <code>~/.nanobot/config.json</code>. Cashmaxx has no account system, no analytics, and no telemetry sent to us.</p>
+      <p>The nanobot WebUI can check the public Python Package Index (PyPI) for a newer nanobot release. That request goes to PyPI, not to us, and contains ordinary connection information only.</p>
+
+      <h2>Services you connect</h2>
+      <p>Cashmaxx works by connecting to accounts you choose and configure, which may include OpenRouter and the AI model providers behind it, Coinbase Developer Platform, the Base network, Stripe, Gmail or AgentMail, Telegram, GitHub, Bluesky, X, Reddit, search and scraping providers, Browserbase, and Cloudflare. Your agent sends them the data needed to do its work, such as prompts, emails, posts, code, and payment requests.</p>
+      <p>Those services are independent of us. Their own terms and privacy policies govern what they collect and keep. Transactions on a public blockchain such as Base are permanent and publicly visible.</p>
+
+      <h2>Other people's data</h2>
+      <p>If your agent sends email, posts publicly, or handles customer payments, it may process other people's personal information. When you run Cashmaxx, you are responsible for that processing and for following the laws that apply to you, including anti-spam and data protection laws.</p>
+
+      <h2>Public profit page</h2>
+      <p>Cashmaxx can serve an optional public profit page. It is off by default. If you turn it on, whatever it shows is published by you, from your own machine.</p>
+
+      <h2>When you visit this website</h2>
+      <p>This website doesn't use analytics scripts, advertising trackers, or cookies. It is hosted on Cloudflare, which processes ordinary connection information such as your IP address, requested pages, and browser details to deliver the site and protect it from abuse. Links to GitHub take you to a site with its own privacy policy.</p>
+
+      <h2>When you contact us</h2>
+      <p>If you email us or open a GitHub issue, we receive what you send, along with your email address or GitHub profile. GitHub issues are public. We use this only to respond and to improve Cashmaxx. Please never send API keys, wallet secrets, or PINs, and remove them from any logs you share.</p>
+
+      <h2>Your rights</h2>
+      <p>Depending on where you live, you may have rights to access, correct, delete, or object to the use of personal information we hold. In practice, that means emails you've sent us. Contact <a href="mailto:cashmaxx@neu.so">cashmaxx@neu.so</a> to make a request, or complain to your local data protection authority.</p>
+
+      <h2>Changes</h2>
+      <p>If this changes, we'll update this page and the date above.</p>
+      <a class="back" href="/">← Back to Cashmaxx</a>
+    </div>
+  </main>
+
+  <footer class="footer wrap">
+    <span>© 2026 Neu Software LLC · MIT licensed · built on <a href="https://github.com/HKUDS/nanobot">nanobot</a></span>
+    <nav aria-label="Footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/support/">Support</a><a href="https://github.com/tashfeenahmed/cashmaxx">GitHub</a></nav>
+  </footer>
+</body>
+</html>

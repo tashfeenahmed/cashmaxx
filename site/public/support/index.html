@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <title>Support — Cashmaxx</title>
+  <meta name="description" content="Get help with Cashmaxx: GitHub issues, security reports, and email.">
+  <link rel="canonical" href="https://cashmaxx.neu.so/support/">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="header wrap">
+    <a class="brand" href="/" aria-label="Cashmaxx home"><img src="/favicon.svg" width="32" height="32" alt="">Cashmaxx</a>
+    <nav aria-label="Main navigation">
+      <a class="hide-sm" href="/#how">How it works</a>
+      <a class="hide-sm" href="/#start">Quick start</a>
+      <a class="gh" href="https://github.com/tashfeenahmed/cashmaxx">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main" class="legal wrap">
+    <div class="legal-card">
+      <p class="eyebrow">Cashmaxx</p>
+      <h1>Support</h1>
+      <p class="lead">Stuck, found a bug, or have an idea?</p>
+
+      <p class="summary">The best place for bugs and questions is <a href="https://github.com/tashfeenahmed/cashmaxx/issues">GitHub issues</a>. For anything private, email <a href="mailto:cashmaxx@neu.so">cashmaxx@neu.so</a>.</p>
+
+      <h2>Before you open an issue</h2>
+      <ul>
+        <li>Run <code>cashmaxx status</code> and include the output, with addresses and amounts removed if you prefer.</li>
+        <li>Say which network you're on (<code>fake</code>, <code>base-sepolia</code>, or <code>base</code>), your OS, and your Python version.</li>
+        <li>Check the <a href="https://github.com/tashfeenahmed/cashmaxx#readme">README</a> and the <a href="https://github.com/tashfeenahmed/cashmaxx/blob/main/docs/cashmaxx/ARCHITECTURE.md">architecture notes</a>.</li>
+      </ul>
+      <p><b>Never post</b> API keys, wallet secrets, your PIN, <code>guard.json</code>, or unredacted logs. GitHub issues are public.</p>
+
+      <h2>Something is going wrong right now</h2>
+      <p>Freeze all spending first: press Freeze in the WebUI, send <code>/freeze</code> to the guard's Telegram bot, or run <code>cashmaxx freeze</code>. Only you can unfreeze, with your PIN.</p>
+
+      <h2>Security issues</h2>
+      <p>Please don't report vulnerabilities in public issues. Use GitHub's private security advisory on the <a href="https://github.com/tashfeenahmed/cashmaxx/security">repository's Security tab</a>, or email <a href="mailto:cashmaxx@neu.so">cashmaxx@neu.so</a>.</p>
+
+      <h2>What we can't help with</h2>
+      <p>We can't recover lost funds or reverse blockchain transactions, and we can't access your machine, keys, or ledger. For problems with a connected account, contact that service directly.</p>
+
+      <p>See also our <a href="/privacy/">Privacy Policy</a> and <a href="/terms/">Terms</a>.</p>
+      <a class="back" href="/">← Back to Cashmaxx</a>
+    </div>
+  </main>
+
+  <footer class="footer wrap">
+    <span>© 2026 Neu Software LLC · MIT licensed · built on <a href="https://github.com/HKUDS/nanobot">nanobot</a></span>
+    <nav aria-label="Footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/support/">Support</a><a href="https://github.com/tashfeenahmed/cashmaxx">GitHub</a></nav>
+  </footer>
+</body>
+</html>
