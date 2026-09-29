@@ -7,6 +7,7 @@
 
 <p>
   <img src="https://img.shields.io/badge/status-experimental-orange" alt="Status: experimental">
+  <a href="https://github.com/tashfeenahmed/cashmaxx/actions/workflows/ci.yml"><img src="https://github.com/tashfeenahmed/cashmaxx/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <img src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python 3.11+">
   <img src="https://img.shields.io/badge/wallet-USDC%20on%20Base-0052FF?logo=coinbase&logoColor=white" alt="USDC on Base">
   <img src="https://img.shields.io/badge/payments-x402%20%7C%20Stripe-635BFF?logo=stripe&logoColor=white" alt="x402 and Stripe">
