@@ -92,6 +92,11 @@ jobs:
                   # The Docker image builds and bundles both WebUI trees.
                   docker_required=true
                   ;;
+                cashmaxx/*)
+                  # nanobot imports cashmaxx (config schema, gateway hook) and the image copies it.
+                  python_required=true
+                  docker_required=true
+                  ;;
                 nanobot/*)
                   # Channel WebUI files were handled by the previous case.
                   python_required=true

@@ -38,6 +38,7 @@ RUN mkdir -p nanobot && touch nanobot/__init__.py && \
 
 # Copy the full source and install
 COPY nanobot/ nanobot/
+COPY cashmaxx/ cashmaxx/
 COPY scripts/install_channel_dependencies.py scripts/
 COPY --from=webui-builder /app/nanobot/web/dist/ nanobot/web/dist/
 RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv pip install --python "$VIRTUAL_ENV/bin/python" --no-cache .
