@@ -18,7 +18,7 @@ from cashmaxx.guard.integrations.hosting import HostingManager
 from cashmaxx.guard.integrations.service import IntegrationDeps
 
 SECRET_MARK = "SeCrEt"
-GMAIL_ADDR = "agent@gmail.com"
+GMAIL_ADDR = "agent@example.com"
 GMAIL_PW = f"{SECRET_MARK}-gmail-app-pw"
 
 

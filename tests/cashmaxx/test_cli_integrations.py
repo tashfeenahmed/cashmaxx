@@ -135,11 +135,11 @@ def test_connect_gmail_updates_tests_and_sets_provider(env: tuple[Guard, Path, P
     guard, cfg, ws = env
     # address, app password, PIN, use as email provider
     result = runner.invoke(cli.main, ["connect", "gmail", "-c", str(cfg)],
-                           input="agent@gmail.com\napppassword16chr\n123456\ny\n")
+                           input="agent@example.com\napppassword16chr\n123456\ny\n")
     assert result.exit_code == 0, result.output
     put = next(r for r in guard.requests if r.method == "PUT")
     assert put.url.path == "/integrations/gmail"
-    assert json.loads(put.content) == {"fields": {"address": "agent@gmail.com",
+    assert json.loads(put.content) == {"fields": {"address": "agent@example.com",
                                                   "appPassword": "apppassword16chr"}}
     assert ("POST", "/integrations/gmail/test") in guard.calls()
     assert "test passed: login ok" in result.output
@@ -167,10 +167,10 @@ def test_connect_existing_keeps_secrets_on_empty(env: tuple[Guard, Path, Path]) 
 def test_connect_required_field_reprompts(env: tuple[Guard, Path, Path]) -> None:
     guard, cfg, _ = env
     result = runner.invoke(cli.main, ["connect", "gmail", "-c", str(cfg), "--pin", "123456"],
-                           input="\nagent@gmail.com\n\npw\nn\n")
+                           input="\nagent@example.com\n\npw\nn\n")
     assert result.exit_code == 0, result.output
     put = next(r for r in guard.requests if r.method == "PUT")
-    assert json.loads(put.content)["fields"] == {"address": "agent@gmail.com", "appPassword": "pw"}
+    assert json.loads(put.content)["fields"] == {"address": "agent@example.com", "appPassword": "pw"}
 
 
 def test_connect_hosting_offers_hosting_enabled(env: tuple[Guard, Path, Path]) -> None:

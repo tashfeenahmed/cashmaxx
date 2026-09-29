@@ -99,11 +99,11 @@ async def test_status_lists_connected_integrations(fake_guard: FakeGuard, worksp
         {"id": "bluesky", "label": "Bluesky", "kind": "guard", "category": "social",
          "connected": True},
     ]})
-    fake_guard.set("GET", "/email/status", {"provider": "gmail", "address": "bot@gmail.com",
+    fake_guard.set("GET", "/email/status", {"provider": "gmail", "address": "bot@example.com",
                                             "connected": True, "sent_today": 2, "cap_today": 10})
     text = await _send(_router(), "/cashmaxx", workspace)
     assert "Integrations:" in text
-    assert "  - Gmail (email): connected, bot@gmail.com, 2/10 sent today" in text
+    assert "  - Gmail (email): connected, bot@example.com, 2/10 sent today" in text
     assert "  - Bluesky (social): connected" in text
     assert "X (Twitter)" not in text and "Browser" not in text
 

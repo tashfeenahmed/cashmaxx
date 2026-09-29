@@ -40,7 +40,7 @@ def test_untrusted_truncates() -> None:
 
 async def test_inbox_is_wrapped(fake_guard: FakeGuard) -> None:
     fake_guard.set("GET", "/email/inbox", {"messages": [{
-        "id": "m1", "from": "Eve <eve@x.io>", "to": ["me@x.io"], "subject": INJECTION,
+        "id": "m1", "from": "Eve <eve@example.com>", "to": ["me@example.com"], "subject": INJECTION,
         "date": "2026-09-26", "snippet": "click here", "thread_id": "t1", "unread": True,
     }]})
     result = await t.EmailInboxTool().execute(unread_only=True, limit=5)
@@ -60,7 +60,7 @@ async def test_inbox_empty(fake_guard: FakeGuard) -> None:
 
 async def test_read_is_wrapped(fake_guard: FakeGuard) -> None:
     fake_guard.set("GET", "/email/messages/m1", {
-        "id": "m1", "from": "eve@x.io", "to": ["me@x.io"], "cc": [], "subject": "hi",
+        "id": "m1", "from": "eve@example.com", "to": ["me@example.com"], "cc": [], "subject": "hi",
         "date": "d", "text": INJECTION, "thread_id": "t1", "untrusted": True,
     })
     result = await t.EmailReadTool().execute(message_id="m1")
@@ -108,7 +108,7 @@ async def test_send_passes_in_reply_to(fake_guard: FakeGuard) -> None:
     assert fake_guard.last_json()["in_reply_to"] == "<orig@x>"
 
 
-@pytest.mark.parametrize("to", [["not-an-address"], [f"a{i}@x.io" for i in range(11)], []])
+@pytest.mark.parametrize("to", [["not-an-address"], [f"a{i}@example.com" for i in range(11)], []])
 async def test_send_rejects_bad_recipients_locally(fake_guard: FakeGuard, to: list[str]) -> None:
     result = await t.EmailSendTool().execute(**{**SEND, "to": to})
     assert _is_error(result)
@@ -152,11 +152,11 @@ async def test_not_configured(fake_guard: FakeGuard) -> None:
 
 async def test_status_warmup_and_cap(fake_guard: FakeGuard) -> None:
     fake_guard.set("GET", "/email/status", {
-        "provider": "gmail", "address": "bot@gmail.com", "connected": True, "sent_today": 10,
+        "provider": "gmail", "address": "bot@example.com", "connected": True, "sent_today": 10,
         "cap_today": 10, "warmup": {"on": True, "day": 3, "cap": 10},
     })
     result = await t.EmailStatusTool().execute()
-    assert "bot@gmail.com" in result and "10 of 10" in result
+    assert "bot@example.com" in result and "10 of 10" in result
     assert "warm-up: day 3" in result and "try tomorrow" in result
 
 

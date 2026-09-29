@@ -46,7 +46,7 @@ function fullItems() {
     {
       id: "gmail", label: "Gmail", kind: "guard", category: "email", connected: true,
       summary: "Gmail.", docs_url: "https://myaccount.google.com/apppasswords",
-      fields: [f("address", "Gmail address", { set: true, value: "agent@gmail.com" }),
+      fields: [f("address", "Gmail address", { set: true, value: "agent@example.com" }),
         f("appPassword", "App password", { secret: true, set: true })],
       connected_at: NINE_DAYS_AGO, last_test: null,
     },
@@ -237,14 +237,14 @@ describe("Cashmaxx integrations: connect and edit", () => {
     const password = within(dialog).getByLabelText(/App password/);
     expect(password).toHaveValue("");
     const address = within(dialog).getByLabelText(/Gmail address/);
-    expect(address).toHaveValue("agent@gmail.com");
+    expect(address).toHaveValue("agent@example.com");
     await user.clear(address);
-    await user.type(address, "new@gmail.com");
+    await user.type(address, "new@example.com");
     await user.click(within(dialog).getByRole("button", { name: "Save with PIN" }));
 
     await waitFor(() => expect(actions(mutations, "cashmaxx.integrations.update")).toHaveLength(1));
     const payload = actions(mutations, "cashmaxx.integrations.update")[0].payload;
-    expect(payload.fields).toEqual({ address: "new@gmail.com" });
+    expect(payload.fields).toEqual({ address: "new@example.com" });
     expect(payload.fields).not.toHaveProperty("appPassword");
   });
 

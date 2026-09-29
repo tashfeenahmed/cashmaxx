@@ -64,7 +64,7 @@ describe("gmail warm-up", () => {
 
 describe("integration form model", () => {
   const fields = [
-    field({ name: "address", value: "agent@gmail.com", set: true }),
+    field({ name: "address", value: "agent@example.com", set: true }),
     field({ name: "appPassword", secret: true, set: true }),
     field({ name: "inboxId", required: false }),
     field({ name: "provider", choices: ["cloudflare_quick", "cloudflare_token"] }),
@@ -72,7 +72,7 @@ describe("integration form model", () => {
 
   it("prefills non-secret values and the first choice, never secrets", () => {
     expect(initialFormValues(fields)).toEqual({
-      address: "agent@gmail.com", appPassword: "", inboxId: "", provider: "cloudflare_quick",
+      address: "agent@example.com", appPassword: "", inboxId: "", provider: "cloudflare_quick",
     });
   });
 
@@ -85,8 +85,8 @@ describe("integration form model", () => {
   });
 
   it("leaves an empty secret out of the payload so the guard keeps it", () => {
-    const payload = buildFieldsPayload(fields, { address: " new@gmail.com ", appPassword: "", inboxId: "", provider: "cloudflare_token" });
-    expect(payload).toEqual({ address: "new@gmail.com", inboxId: "", provider: "cloudflare_token" });
+    const payload = buildFieldsPayload(fields, { address: " new@example.com ", appPassword: "", inboxId: "", provider: "cloudflare_token" });
+    expect(payload).toEqual({ address: "new@example.com", inboxId: "", provider: "cloudflare_token" });
     expect("appPassword" in payload).toBe(false);
     expect(buildFieldsPayload(fields, { address: "a", appPassword: "secret", inboxId: "", provider: "p" }).appPassword).toBe("secret");
   });

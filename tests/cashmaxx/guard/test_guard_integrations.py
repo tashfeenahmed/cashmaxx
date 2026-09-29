@@ -108,7 +108,7 @@ async def test_put_merges_and_never_returns_secrets(make_env: EnvFactory) -> Non
     assert env.guard.config.integrations["gmail"].fields["appPassword"] == f"{SECRET_MARK}-new"
     # a new address is a new account: the warm-up restarts
     status, item, _ = await _req(env, "PUT", "/integrations/gmail", owner,
-                                 {"fields": {"address": "other@gmail.com"}})
+                                 {"fields": {"address": "other@example.com"}})
     assert item["connected_at"] == "2026-09-04T12:00:00.000000Z"
 
     # persisted to guard.json (0600) with the secret, never in listings or events

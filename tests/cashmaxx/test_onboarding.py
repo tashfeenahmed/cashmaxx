@@ -448,7 +448,7 @@ def test_no_integrations_by_default() -> None:
 def _integration_script(**over: Any) -> dict[str, Any]:
     return _script(**{
         "More integrations": ["gmail", "agentmail", "hosting", "github", "bluesky"],
-        "Gmail Gmail address": "agent@gmail.com",
+        "Gmail Gmail address": "agent@example.com",
         "Gmail App password": "gmail-app-pw",
         "AgentMail API key": "am-key",
         "Public hosting Provider": "cloudflare_token",
@@ -465,7 +465,7 @@ def _integration_script(**over: Any) -> dict[str, Any]:
 def test_collect_extra_integrations() -> None:
     prompter = ScriptedPrompter(_integration_script())
     a = ob.collect_answers(prompter, Config(), _services()).answers
-    assert a.integrations["gmail"] == {"address": "agent@gmail.com", "appPassword": "gmail-app-pw"}
+    assert a.integrations["gmail"] == {"address": "agent@example.com", "appPassword": "gmail-app-pw"}
     assert a.integrations["agentmail"] == {"apiKey": "am-key", "inboxId": ""}
     assert a.integrations["hosting"] == {"provider": "cloudflare_token", "tunnelToken": "tunnel-tok"}
     assert a.agent_integrations == {"github": {"token": "github_pat_1"}}
@@ -514,13 +514,13 @@ def test_collect_integration_fields_keeps_existing_values() -> None:
 
 
 def test_build_guard_integrations_connected_at() -> None:
-    a = _answers(integrations={"gmail": {"address": "a@gmail.com", "appPassword": "pw "}})
+    a = _answers(integrations={"gmail": {"address": "a@example.com", "appPassword": "pw "}})
     fresh = ob.build_guard_integrations(a, now="2026-09-26T00:00:00+00:00")
-    assert fresh["gmail"].fields == {"address": "a@gmail.com", "appPassword": "pw"}
+    assert fresh["gmail"].fields == {"address": "a@example.com", "appPassword": "pw"}
     assert fresh["gmail"].connected_at == "2026-09-26T00:00:00+00:00"
 
     existing = GuardConfig.model_validate({"integrations": {
-        "gmail": {"fields": {"address": "a@gmail.com", "appPassword": "old"},
+        "gmail": {"fields": {"address": "a@example.com", "appPassword": "old"},
                   "connectedAt": "2026-09-01T00:00:00+00:00"},
         "bluesky": {"fields": {"handle": "x"}, "connectedAt": "2026-09-02T00:00:00+00:00"},
     }})
@@ -529,7 +529,7 @@ def test_build_guard_integrations_connected_at() -> None:
     assert kept["gmail"].fields["appPassword"] == "pw"
     assert "bluesky" in kept  # not re-entered: kept
     moved = ob.build_guard_integrations(
-        _answers(integrations={"gmail": {"address": "b@gmail.com", "appPassword": "pw"}}),
+        _answers(integrations={"gmail": {"address": "b@example.com", "appPassword": "pw"}}),
         existing, now="2026-09-26T00:00:00+00:00")
     assert moved["gmail"].connected_at == "2026-09-26T00:00:00+00:00"
 

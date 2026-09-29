@@ -57,7 +57,7 @@ async def test_gmail_send_and_status(make_env: EnvFactory) -> None:
     code, body = await send(env, ["a@example.com", "b@example.com"], "k1",
                             html="<p>Hi <b>there</b></p>")
     assert code == 200 and body["status"] == "sent" and body["remaining_today"] == 8
-    assert body["message_id"].endswith("@gmail.com>")
+    assert body["message_id"].endswith("@example.com>")
     msg = box.sent[0]
     assert msg["To"] == "a@example.com, b@example.com" and msg["From"] == GMAIL_ADDR
     assert msg.get_body(("html",)) is not None

@@ -80,7 +80,7 @@ INTEGRATIONS: tuple[IntegrationSpec, ...] = (
         "gmail", "Gmail", "guard", "email",
         "The agent's own Gmail address: read the inbox and send within the daily cap. New "
         "accounts warm up over 4 weeks.",
-        (FieldSpec("address", "Gmail address", placeholder="agent@gmail.com"),
+        (FieldSpec("address", "Gmail address", placeholder="agent@example.com"),
          FieldSpec("appPassword", "App password", secret=True,
                    placeholder="16 characters, needs 2-Step Verification")),
         "https://myaccount.google.com/apppasswords",
