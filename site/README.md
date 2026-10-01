@@ -1,6 +1,6 @@
 # Cashmaxx website
 
-Static landing page plus `/privacy/`, `/terms/`, and `/support/` for https://cashmaxx.neu.so. Styled on the
+Static landing page plus `/privacy/`, `/terms/`, `/security/`, and `/support/` for https://cashmaxx.neu.so. Styled on the
 README cover (white grid, emerald `#059669`, ink `#0b1220`) with light and dark modes. The screenshots in
 `public/img` are WebP copies of `images/cashmaxx/webui-*.png`; refresh them when those change.
 
