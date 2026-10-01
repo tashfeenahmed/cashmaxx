@@ -305,15 +305,29 @@ async def test_public_pnl(make_env: EnvFactory) -> None:
     env2 = await make_env(settings={"public_pnl": True, "network": "base-sepolia"},
                           wallet=FakeWallet(network="base-sepolia"))
     await env2.spend(amount="1")
+    # one verified income row (chain) and one unverified one (agent-reported)
+    await env2.guard.store.add_ledger(ts=env2.clock(), direction="income",
+                                      category="sale_stripe", amount=Decimal("2"),
+                                      source="stripe", ref="cs_1", verified=True)
+    await env2.guard.store.add_ledger(ts=env2.clock(), direction="income",
+                                      category="bounty", amount=Decimal("0.5"),
+                                      source="agent_reported", ref="b1")
     data = await (await env2.client.get("/public/pnl.json")).json()
     assert data["windows"]["all"]["costs"] == "1.00"
+    assert data["windows"]["all"]["income"] == "2.50"
+    assert data["windows"]["all"]["verified_income"] == "2.00"
     assert data["basescan_url"].startswith("https://sepolia.basescan.org/address/")
     assert "entries" not in data["windows"]["all"]
+    # the marketing site fetches the JSON cross-origin from the browser
+    assert (await env2.client.get("/public/pnl.json")).headers[
+        "Access-Control-Allow-Origin"] == "*"
     resp = await env2.client.get("/public/pnl")
+    assert resp.headers["Access-Control-Allow-Origin"] == "*"
     html = await resp.text()
     assert resp.status == 200 and resp.content_type == "text/html"
     assert "prefers-color-scheme: dark" in html and "sepolia.basescan.org" in html
     assert "payment_out" in html and "test" not in html.split("<main>")[1].split("By window")[0]
+    assert "verified" in html and "Verified" in html
 
 
 async def test_lifecycle_runs_watchers_and_closes(tmp_path: Path) -> None:

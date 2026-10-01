@@ -980,7 +980,7 @@ async def public_pnl_json(request: web.Request) -> web.Response:
     if not guard.settings.public_pnl:
         raise ApiError(404, "not_found", "not found")
     data = await public.public_pnl(guard.store, guard.settings, guard.wallet, guard.now())
-    return web.json_response(data)
+    return web.json_response(data, headers=public.CORS_HEADERS)
 
 
 async def public_pnl_html(request: web.Request) -> web.Response:
@@ -988,7 +988,8 @@ async def public_pnl_html(request: web.Request) -> web.Response:
     if not guard.settings.public_pnl:
         raise ApiError(404, "not_found", "not found")
     data = await public.public_pnl(guard.store, guard.settings, guard.wallet, guard.now())
-    return web.Response(text=public.render_pnl_html(data), content_type="text/html")
+    return web.Response(text=public.render_pnl_html(data), content_type="text/html",
+                        headers=public.CORS_HEADERS)
 
 
 # --- factory ----------------------------------------------------------------------------------

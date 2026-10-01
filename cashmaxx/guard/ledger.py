@@ -55,6 +55,12 @@ def summarize(entries: list[LedgerEntry]) -> tuple[Decimal, Decimal, dict[str, D
     return income, costs, by_category
 
 
+def verified_income(entries: list[LedgerEntry]) -> Decimal:
+    """Income backed by chain or Stripe evidence (``verified=1`` rows)."""
+    return sum((e.amount_usd for e in entries
+                if e.direction == "income" and e.verified), ZERO)
+
+
 async def pnl(
     store: Store, window: str, now: datetime, *, include_entries: bool = True
 ) -> dict[str, Any]:
@@ -63,6 +69,7 @@ async def pnl(
     out: dict[str, Any] = {
         "window": window,
         "income": fmt_usd(income),
+        "verified_income": fmt_usd(verified_income(entries)),
         "costs": fmt_usd(costs),
         "net": fmt_usd(income - costs),
         "by_category": {k: fmt_usd(v) for k, v in sorted(by_category.items())},
