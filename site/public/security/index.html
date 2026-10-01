@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <title>Security &amp; threat model — Cashmaxx</title>
+  <meta name="description" content="The Cashmaxx guard's threat model: the agent never sees wallet, payment, email or social credentials; what triggers an approval; and exactly what the freeze does.">
+  <link rel="canonical" href="https://cashmaxx.neu.so/security/">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://analytics.planintel.ie/script.js" data-website-id="4157ae0c-398f-4ede-9ed2-298a86b92a4f" data-domains="cashmaxx.neu.so"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="header wrap">
+    <a class="brand" href="/" aria-label="Cashmaxx home"><img src="/favicon.svg" width="32" height="32" alt="">Cashmaxx</a>
+    <nav aria-label="Main navigation">
+      <a class="hide-sm" href="/#how">How it works</a>
+      <a class="hide-sm" href="/#safety">Safety</a>
+      <a class="hide-sm" href="/#start">Quick start</a>
+      <a class="gh" href="https://github.com/tashfeenahmed/cashmaxx">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main" class="legal wrap">
+    <div class="legal-card">
+      <p class="eyebrow">Cashmaxx</p>
+      <h1>Security &amp; threat model</h1>
+      <p class="lead">What the agent can touch, what it can't, and who says yes.</p>
+      <p class="date">Last updated: 1 October 2026</p>
+
+      <p class="summary">The threat model assumes the agent is adversarial: the model can be prompt-injected, hallucinate, or loop. So it doesn't get to be trusted. Cashmaxx runs two processes: the <b>agent</b>, which thinks and acts, and the <b>guard</b>, a separate program that holds every credential and makes every spend decision. The agent's only money power is <i>asking</i>. Everything on this page describes what the code enforces, not what the model is told.</p>
+
+      <h2>The key separation</h2>
+      <p>The guard process exclusively holds the wallet credentials (Coinbase Developer Platform server wallet), the Stripe restricted key, the OpenRouter key, the guard's own Telegram bot token, the owner PIN hash, and any email, social, or hosting credentials you connect. They live in <code>~/.cashmaxx/guard.json</code>, written mode <code>0600</code>, read only by the guard.</p>
+      <p>The agent process gets one thing: an <b>agent token</b>. That token can read state (balance, ledger, settings without secrets) and <i>request</i> spending. It is stored on the guard side only as a SHA-256 digest and compared in constant time. With the agent token you cannot approve an approval, change a rule, or unfreeze — those endpoints require the owner scope, which the agent never possesses.</p>
+      <p>That means the agent never sees, and therefore can never leak, your wallet keys, your payment credentials, your email password or app tokens, or your social account credentials. A fully compromised agent can at most send well-formed <i>requests</i> — which then meet the policy engine below.</p>
+      <p>The owner authenticates to the guard directly, with a PIN the agent never sees (stored only as a scrypt hash). Owner sessions are opaque tokens kept in the guard's memory, valid 12 hours, rate-limited, and gone on restart. The guard's Telegram bot uses a different bot token from the agent's chat bot and only acts on messages from your own chat id.</p>
+
+      <h2>What the agent can do</h2>
+      <ul>
+        <li>Check its balance and remaining budget.</li>
+        <li>Request a payment: USDC on Base, or an x402 pay-per-call request capped at a stated <code>max_usd</code>.</li>
+        <li>Read the P&amp;L ledger, and record agent-reported costs (clearly marked as unverified).</li>
+        <li>Create a Stripe product and payment link, using the guard's restricted key.</li>
+        <li>Ask for capped outbound work — email sends and social posts — which the guard performs with its own credentials and its own daily caps.</li>
+        <li><b>Freeze everything.</b> The kill switch is always safe to pull, so the agent can trigger it too.</li>
+      </ul>
+
+      <h2>What the agent can never do</h2>
+      <ul>
+        <li>Approve its own payment, or approve anything at all.</li>
+        <li>Change budget, caps, thresholds, the allowlist, or any other rule.</li>
+        <li>Unfreeze. Only the owner scope can, via your PIN or the guard's Telegram bot.</li>
+        <li>Make a swap or an arbitrary contract call. The policy engine only knows two spend kinds — USDC transfer and x402 — and rejects everything else. This is hard-coded, not a prompt.</li>
+        <li>Read the guard's config, database, or process memory. Run the guard as a different OS user or container and this is an OS boundary; the agent's shell additionally runs inside an OS sandbox (Seatbelt on macOS, bubblewrap on Linux).</li>
+        <li>Pay twice by retrying. Every payment carries an idempotency key; a replayed request returns the original result.</li>
+      </ul>
+
+      <h2>What triggers an approval</h2>
+      <p>Every spend request runs through the same fixed-order policy. First match wins:</p>
+      <ul>
+        <li><b>Deny outright</b> — if the wallet is frozen; the amount or address is invalid; the spend isn't a plain USDC transfer or x402 payment; it exceeds the available budget; it would break the daily cap; or too many payments went out in the last hour.</li>
+        <li><b>Wait for you</b> — if the amount is over your per-payment approval threshold, or the recipient is new (not previously paid and not on your allowlist).</li>
+        <li><b>Allow</b> — everything else: small, in-budget payments to known recipients.</li>
+      </ul>
+      <p>Approvals reach you through the guard's own Telegram bot or the WebUI — channels the agent doesn't control. When you approve, the guard re-checks the hard limits (freeze, budget, daily cap, rate) at execution time, so an approval granted hours ago can't slip through after conditions changed. Unanswered approvals expire after 24 hours. If the guard is unreachable, the wallet tools fail closed: the agent spends nothing.</p>
+
+      <h2>What the freeze does</h2>
+      <p>Freeze is the first check in the policy engine: while frozen, every spend request is denied, full stop — no amount, no recipient, no exceptions. Anyone can pull it: the Freeze button in the WebUI, <code>/freeze</code> to the guard's Telegram bot, <code>cashmaxx freeze</code> on the CLI, or the agent's own <code>cashmaxx_freeze</code> tool. Unfreezing requires the owner scope: your PIN, or you, in your own Telegram chat with the guard bot.</p>
+      <p>There is also an automatic one. If you enable the loss stop and your 7-day net P&amp;L falls below your loss threshold, the guard freezes itself and tells you why.</p>
+
+      <h2>What this is not</h2>
+      <p>Custodial services advertise insurance and screening — a $10,000 protection guarantee here, KYT transaction screening and hardware-isolated keys there. Cashmaxx is the opposite trade: no company holds your keys, so there is nothing to insure and nothing to breach on our side, because there is no "our side." You get a boundary you can read (<a href="https://github.com/tashfeenahmed/cashmaxx/blob/main/docs/cashmaxx/ARCHITECTURE.md">the architecture and policy engine are in the open</a>) and you accept the responsibilities of running it yourself.</p>
+      <p>So keep the honest limits in view:</p>
+      <ul>
+        <li>The guard protects <i>spending</i>, not the rest of your machine. The agent still has a real shell, browser, and file system — inside its sandbox and workspace, and those boundaries are enforced by your OS configuration, so run the guard as a separate user or container before funding a real wallet.</li>
+        <li>You approve payments over your threshold with a PIN typed by you. If your own machine is compromised at the OS level, no software boundary inside it holds.</li>
+        <li>Blockchain transactions are irreversible. A payment you approve goes out; nobody can reverse it.</li>
+        <li>The guard binds to <code>127.0.0.1</code> by default — it listens only on your own machine.</li>
+      </ul>
+
+      <h2>Reporting a vulnerability</h2>
+      <p>Please don't file public issues for security problems. Use GitHub's private security advisory on the <a href="https://github.com/tashfeenahmed/cashmaxx/security">repository's Security tab</a> or email <a href="mailto:cashmaxx@neu.so">cashmaxx@neu.so</a>. More on the <a href="/support/">support page</a>.</p>
+
+      <a class="back" href="/">← Back to Cashmaxx</a>
+    </div>
+  </main>
+
+  <footer class="footer wrap">
+    <span>© 2026 Neu Software LLC · MIT licensed · built on <a href="https://github.com/HKUDS/nanobot">nanobot</a></span>
+    <nav aria-label="Footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/security/">Security</a><a href="/support/">Support</a><a href="https://github.com/tashfeenahmed/cashmaxx">GitHub</a></nav>
+  </footer>
+</body>
+</html>
