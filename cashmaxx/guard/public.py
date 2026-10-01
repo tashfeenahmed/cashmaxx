@@ -44,6 +44,11 @@ def _money(amount: str) -> str:
     return f"-${escape(amount[1:])}" if amount.startswith("-") else f"${escape(amount)}"
 
 
+# The marketing site (cashmaxx.neu.so/pnl/) fetches /public/pnl.json from the browser,
+# so the public endpoints answer with a permissive CORS header. Only totals are exposed.
+CORS_HEADERS = {"Access-Control-Allow-Origin": "*"}
+
+
 def render_pnl_html(data: dict[str, Any]) -> str:
     total = data["windows"]["all"]
     rows = "".join(
@@ -52,6 +57,7 @@ def render_pnl_html(data: dict[str, Any]) -> str:
     ) or '<tr><td colspan=2 class=muted>No entries yet</td></tr>'
     windows = "".join(
         f"<tr><td>{escape(w)}</td><td class=num>{_money(v['income'])}</td>"
+        f"<td class=num>{_money(v.get('verified_income', '0'))}</td>"
         f"<td class=num>{_money(v['costs'])}</td><td class=num>{_money(v['net'])}</td></tr>"
         for w, v in data["windows"].items()
     )
@@ -89,13 +95,14 @@ a {{ color:var(--accent); word-break:break-all; }}
 <p class=muted>An AI agent trying to earn more than it costs. {escape(data["network"])} ·
 {status} · updated {escape(data["generated_at"])}</p>
 <div class=cards>
-<div class=card><span class=muted>Income</span><b>{_money(total["income"])}</b></div>
+<div class=card><span class=muted>Income</span><b>{_money(total["income"])}</b>
+<span class=muted>verified {_money(total.get("verified_income", "0"))}</span></div>
 <div class=card><span class=muted>Costs</span><b>{_money(total["costs"])}</b></div>
 <div class=card><span class=muted>Net</span><b class={net_class}>{_money(total["net"])}</b></div>
 </div>
 <h2>By window</h2>
-<table><tr><th>Window</th><th class=num>Income</th><th class=num>Costs</th>
-<th class=num>Net</th></tr>
+<table><tr><th>Window</th><th class=num>Income</th><th class=num>Verified</th>
+<th class=num>Costs</th><th class=num>Net</th></tr>
 {windows}</table>
 <h2>By category (all time)</h2>
 <table><tr><th>Category</th><th class=num>Amount</th></tr>{rows}</table>

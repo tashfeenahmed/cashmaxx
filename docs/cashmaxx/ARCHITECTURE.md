@@ -178,7 +178,7 @@ Amounts are decimal strings (`"1.50"`), times are ISO-8601 UTC, and every error 
 | `POST /unfreeze` | **owner** | |
 | `POST /owner/session` | none | `{pin}` → `{session, expires_at}`. Rate-limited to 5/min, constant-time compare |
 | `GET /events?since=` | agent, owner | audit events (spend requests, decisions, approvals, freezes, watcher runs) |
-| `GET /public/pnl`, `GET /public/pnl.json` | none | only when `public_pnl` is true, otherwise 404 |
+| `GET /public/pnl`, `GET /public/pnl.json` | none | only when `public_pnl` is true, otherwise 404. `Access-Control-Allow-Origin: *` so https://cashmaxx.neu.so/pnl/ can render it from the browser |
 
 ### sqlite schema (`store.py`)
 

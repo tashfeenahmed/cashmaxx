@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <title>Live P&amp;L — Cashmaxx</title>
+  <meta name="description" content="The live profit and loss of a running Cashmaxx experiment: income verified from the chain and Stripe, costs, and net, straight from the guard's own ledger.">
+  <link rel="canonical" href="https://cashmaxx.neu.so/pnl/">
+  <meta property="og:title" content="Live P&amp;L — Cashmaxx">
+  <meta property="og:description" content="Income verified from the chain and Stripe, costs, and net — read live from the guard's ledger.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cashmaxx.neu.so/pnl/">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://analytics.planintel.ie/script.js" data-website-id="4157ae0c-398f-4ede-9ed2-298a86b92a4f" data-domains="cashmaxx.neu.so"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="header wrap">
+    <a class="brand" href="/" aria-label="Cashmaxx home"><img src="/favicon.svg" width="32" height="32" alt="">Cashmaxx</a>
+    <nav aria-label="Main navigation">
+      <a class="hide-sm" href="/#how">How it works</a>
+      <a class="hide-sm" href="/#safety">Safety</a>
+      <a class="hide-sm" href="/pnl/">Live P&amp;L</a>
+      <a class="gh" href="https://github.com/tashfeenahmed/cashmaxx">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap pnl">
+    <p class="eyebrow">The experiment, live</p>
+    <h1>Live P&amp;L.</h1>
+    <p class="lede">Can an AI agent earn more than it costs? This page reads a running guard's own
+      ledger — no demo data, no screenshots. Income counts as <b>verified</b> only when it came in
+      on-chain or through Stripe; anything the agent reported itself is counted but labelled.</p>
+
+    <form class="guard-bar" id="guard-form" autocomplete="off">
+      <label class="guard-label" for="guard-url">Guard URL</label>
+      <input class="guard-input" id="guard-url" type="url" spellcheck="false"
+             placeholder="https://your-guard.example.com" inputmode="url">
+      <button class="button primary" type="submit">Load</button>
+      <button class="button ghost" type="button" id="guard-reset" hidden>Reset</button>
+    </form>
+    <p class="guard-hint" id="guard-hint">The guard publishes this page only when its owner turns
+      <code>public_pnl</code> on and exposes it (for example with <code>cloudflared</code>). Every
+      self-hosted experiment has its own guard URL — paste one above, or open the guard's own
+      <code>/public/pnl</code> page directly.</p>
+
+    <section id="status" aria-live="polite">
+      <div class="pnl-state" id="state-empty" hidden>
+        <div class="pnl-card">
+          <h2>No guard connected</h2>
+          <p>Nothing to show yet. Point this page at a guard that has <code>public_pnl</code>
+            enabled, or read about <a href="/#how">how the ledger works</a>.</p>
+        </div>
+      </div>
+      <div class="pnl-state" id="state-error" hidden>
+        <div class="pnl-card pnl-error">
+          <h2 id="error-title">Couldn't load the ledger</h2>
+          <p id="error-body">The guard did not answer. It may be offline, or
+            <code>public_pnl</code> may be off (the endpoint answers 404 when it is).</p>
+          <p><button class="button ghost" type="button" id="retry">Retry</button></p>
+        </div>
+      </div>
+      <div class="pnl-state" id="state-loading" hidden>
+        <p class="pnl-loading muted">Loading…</p>
+      </div>
+      <div id="pnl-data" hidden>
+        <p class="pnl-meta mono" id="pnl-meta"></p>
+        <div class="cards pnl-cards">
+          <div class="card"><p class="card-label muted">Income · all time</p><b id="v-income">–</b>
+            <p class="card-sub muted" id="v-verified"></p></div>
+          <div class="card"><p class="card-label muted">Costs · all time</p><b id="v-costs">–</b></div>
+          <div class="card"><p class="card-label muted">Net · all time</p><b id="v-net">–</b></div>
+        </div>
+        <h2>By window</h2>
+        <div class="table-wrap">
+          <table aria-label="Profit and loss by window">
+            <thead><tr><th scope="col">Window</th><th scope="col" class="num">Income</th>
+              <th scope="col" class="num">Verified</th><th scope="col" class="num">Costs</th>
+              <th scope="col" class="num">Net</th></tr></thead>
+            <tbody id="window-rows"></tbody>
+          </table>
+        </div>
+        <h2>By category · all time</h2>
+        <div class="table-wrap">
+          <table aria-label="Profit and loss by category">
+            <thead><tr><th scope="col">Category</th><th scope="col" class="num">Amount</th></tr></thead>
+            <tbody id="category-rows"></tbody>
+          </table>
+        </div>
+        <p class="pnl-wallet muted" id="pnl-wallet"></p>
+        <p class="pnl-refresh muted" id="pnl-refresh"></p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="howverify-title" style="padding-top:64px">
+      <p class="eyebrow">Why you can believe these numbers</p>
+      <h2 id="howverify-title">Verified income, honest labels.</h2>
+      <p class="lede">The guard is the only process that writes the ledger, and it never writes
+        from what the agent claims. Incoming USDC is read from the chain and Stripe sales from
+        the Stripe API; both rows carry a <code>verified</code> flag, and this page shows how much
+        of the income carries it. Totals and categories only — no notes, recipients, or
+        transactions.</p>
+    </section>
+  </main>
+
+  <footer class="footer wrap">
+    <span>© 2026 Neu Software LLC · MIT licensed · built on <a href="https://github.com/HKUDS/nanobot">nanobot</a></span>
+    <nav aria-label="Footer"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/support/">Support</a><a href="https://github.com/tashfeenahmed/cashmaxx">GitHub</a></nav>
+  </footer>
+
+  <script src="/pnl/app.js"></script>
+</body>
+</html>

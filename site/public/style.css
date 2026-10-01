@@ -167,6 +167,32 @@ pre .p { color: #34d399; user-select: none; }
 .footer nav a { text-decoration: none; }
 .footer nav a:hover { color: var(--ink); }
 
+/* Live P&L page */
+.pnl { max-width: 880px; padding-top: 56px; }
+.pnl h1 { font-size: clamp(42px, 7.2vw, 72px); font-weight: 800; letter-spacing: -0.045em; line-height: 1.02; margin: 0 0 16px; }
+.pnl .lede { color: var(--muted); font-size: 19px; max-width: 44em; margin: 0 0 36px; }
+.pnl h2 { font-size: 26px; letter-spacing: -0.02em; margin: 44px 0 12px; }
+.guard-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; }
+.guard-label { font: 600 13px/1 var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: 0.08em; }
+.guard-input { flex: 1 1 320px; min-width: 0; font: 15px/1 var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+.guard-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.guard-hint { font-size: 14px; color: var(--faint); margin: 0 0 24px; }
+.pnl-state[hidden], #pnl-data[hidden] { display: none; }
+.pnl-card { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 28px; }
+.pnl-card h2 { margin: 0 0 8px; font-size: 21px; }
+.pnl-card p { margin: 0 0 10px; color: var(--muted); }
+.pnl-loading { padding: 28px 0; }
+.pnl-meta { font-size: 13px; color: var(--faint); margin: 0 0 14px; }
+.pnl-cards { margin: 0 0 8px; }
+.pnl-cards .card b { display: block; font-size: 34px; letter-spacing: -0.03em; color: var(--ink); font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
+.card-label { font: 600 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin: 0; }
+.card-sub { font-size: 13px; margin: 2px 0 0; }
+.num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.pos { color: var(--accent-ink); }
+.neg { color: var(--loss); }
+.pnl-wallet, .pnl-refresh { font-size: 14px; margin: 14px 0 0; }
+.pnl-wallet a { color: var(--accent-ink); }
+
 @media (max-width: 900px) {
   .cards { grid-template-columns: 1fr; }
   .split { grid-template-columns: 1fr; }
