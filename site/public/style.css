@@ -127,6 +127,9 @@ th { font: 600 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.
 tr:last-child td { border-bottom: 0; }
 td b { color: var(--ink); }
 td.honest { color: var(--muted); }
+tbody th { white-space: nowrap; }
+tr:last-child th { border-bottom: 0; }
+table.compare { min-width: 900px; }
 
 /* Code */
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }

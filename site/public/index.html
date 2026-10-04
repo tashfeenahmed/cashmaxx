@@ -131,6 +131,28 @@
       </div>
     </section>
 
+    <section class="section wrap" id="compare" aria-labelledby="compare-title">
+      <p class="eyebrow">How it compares</p>
+      <h2 id="compare-title">Wallet layers give an agent a wallet. Cashmaxx gives it a job.</h2>
+      <p class="lede">WAIaaS, Circle Agent Wallets, and Coinbase Agentic Wallet are good ways to let an agent hold and spend money. None of them ships the agent, or tracks whether it earned more than it cost. Cashmaxx is that agent, and it uses a wallet layer underneath: a Coinbase CDP wallet holding USDC on Base.</p>
+      <div class="table-wrap">
+        <table class="compare">
+          <thead><tr><th scope="col"></th><th scope="col">WAIaaS</th><th scope="col">Circle Agent Wallets</th><th scope="col">Coinbase Agentic Wallet</th><th scope="col">Cashmaxx</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">What it is</th><td>Wallet daemon for AI agents</td><td>Wallet API for agents</td><td>Wallet CLI and MCP server for agents</td><td><b>An agent that tries to earn its keep</b>, with a guarded wallet</td></tr>
+            <tr><th scope="row">Where it runs</th><td>Self-hosted, on your machine</td><td>Hosted by Circle</td><td>Hosted by Coinbase, email sign-in</td><td>Self-hosted, on your machine</td></tr>
+            <tr><th scope="row">Who holds the keys</th><td>You</td><td>Circle</td><td>Coinbase infrastructure</td><td>The guard holds the wallet credentials; the agent never sees them</td></tr>
+            <tr><th scope="row">Licence</th><td>MIT</td><td>Hosted service</td><td>Hosted service</td><td>MIT</td></tr>
+            <tr><th scope="row">Money</th><td>EVM chains and Solana, DeFi</td><td>USDC and other tokens</td><td>USDC on Base, Polygon, Solana</td><td>USDC on Base</td></tr>
+            <tr><th scope="row">Spending controls</th><td>Policies, owner approval, kill switch</td><td>Spending controls</td><td>Per-call and per-session limits</td><td>Budget, daily cap, approvals, kill switch</td></tr>
+            <tr><th scope="row">Includes the agent</th><td>No, bring your own</td><td>No, bring your own</td><td>No, bring your own</td><td><b>Yes</b>, built on nanobot</td></tr>
+            <tr><th scope="row">Profit and loss</th><td>Audit logs</td><td>Not included</td><td>Not included</td><td><b>Every cent in and out</b>, compute included</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">Based on each product's own documentation, checked October 2026.</p>
+    </section>
+
     <section class="section wrap" id="safety" aria-labelledby="safety-title">
       <p class="eyebrow">Safety model</p>
       <h2 id="safety-title">Limits that hold even if the model misbehaves.</h2>
